@@ -461,11 +461,8 @@ public class GenericReplaceBuilder {
     }
 
     public static GenericArrayInfo getGenericArrayInfo(ArrayTypeSignature arrayTypeSignature) {
-
         TypeSignature typeSignature = arrayTypeSignature.getComponentType();
-
         GenericArrayInfo genericArrayInfo = new GenericArrayInfo();
-
         if (typeSignature instanceof ArrayTypeSignature) {
             genericArrayInfo.setInfo(getGenericArrayInfo((ArrayTypeSignature) typeSignature));
         } else if (typeSignature instanceof TypeVariableSignature) {
@@ -476,7 +473,6 @@ public class GenericReplaceBuilder {
         } else {
             genericArrayInfo.setInfo(Object.class);
         }
-
         return genericArrayInfo;
     }
 
