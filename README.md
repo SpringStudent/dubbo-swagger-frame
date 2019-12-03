@@ -12,28 +12,10 @@
 </dependency>    
 ```
 
-**方式一:Xml配置扫描DubboApi的扫描器**
-
-```xml
-<bean id="apiServiceScanner" class="io.github.springstudent.core.ApiServiceScanner">    
-    <!--扫描器生成类的存放包，根据项目调整,该目录必须能够被spring扫描到-->
-    <property name="classPackage" value="com.gysoft.file.file.controller"/></bean>
-```
-
-**方式二:代码配置扫描DubboApi的扫描器**
-
+**一个注解开启dubbo-swagger**
+classPackage用于配置创建的controller存放目录,该目录一定要能够被spring自动扫描包配置如:"<context:component-scan base-package="xx.xx""包含
 ```java
-@Configuration
-public class DubboSwaggerConfig {
-
-    @Bean
-    public ApiServiceScanner apiServiceScanner(){
-        ApiServiceScanner apiServiceScanner = new ApiServiceScanner();
-        apiServiceScanner.setClassPackage("ning.zhou.study.springboot.studyspringboot.web");
-        return apiServiceScanner;
-    }
-}
-
+@EnableDubboSwagger(classPackage = "ning.zhou.study.springboot.studyspringboot.web")
 ```
 
 TODO LIST:
