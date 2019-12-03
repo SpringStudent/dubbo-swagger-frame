@@ -21,7 +21,7 @@ TODO LIST:
 </dependency>    
 ```
 
-**Xml配置扫描DubboApi的扫描器**
+**方式一:Xml配置扫描DubboApi的扫描器**
 
 ```xml
 <bean id="apiServiceScanner" class="io.github.springstudent.core.ApiServiceScanner">    
@@ -29,7 +29,7 @@ TODO LIST:
     <property name="classPackage" value="com.gysoft.file.file.controller"/></bean>
 ```
 
-**代码配置扫描DubboApi的扫描器**
+**方式二:代码配置扫描DubboApi的扫描器**
 
 ```java
 @Configuration
