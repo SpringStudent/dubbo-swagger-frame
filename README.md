@@ -22,6 +22,9 @@
 
 `requestPathPrefix`请求服务地址的前缀配置，比如你有一个dubbo service的方法名称为`pageQuery`，`requestPathPrefix`配置为`pass`,那么在请求该方法时的path会变成`/pass/pageQuery`
 
+**dubbo-swagger-demo**
+https://github.com/SpringStudent/dubbo-swagger-demo
+
 ##### TODO LIST:
 
 Controller不支持多个@RequestBody参数，如果dubbo api服务提供者的方法入参有两个或者以上的
