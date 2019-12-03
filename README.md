@@ -1,5 +1,3 @@
-**该项目还未上传到maven repository,可以下载代码安装到本地体验有部分Bug后面会修复**
-
 TODO LIST:
 
 1.必须手动删除ApiServiceScanner生成的class
