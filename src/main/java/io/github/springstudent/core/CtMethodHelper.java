@@ -1,11 +1,13 @@
 package io.github.springstudent.core;
 
 import io.github.springstudent.third.GenericReplaceBuilder;
+import io.github.springstudent.third.util.StringUtil;
 import io.github.springstudent.tool.ClassHelper;
 import io.github.springstudent.tool.OsUtil;
 import javassist.bytecode.ConstPool;
 import javassist.bytecode.annotation.Annotation;
 import javassist.bytecode.annotation.StringMemberValue;
+import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -60,8 +62,11 @@ public class CtMethodHelper {
     }
 
 
-    public String requestMappingPath() {
+    public String requestMappingPath(String requestPathPrefix) {
         StringBuilder mappingPath = new StringBuilder("/");
+        if(StringUtils.isNotEmpty(requestPathPrefix)){
+            mappingPath.append(requestPathPrefix).append("/");
+        }
         mappingPath.append(methodName);
         for (int i = 0; i < pts.length; i++) {
             if (ClassHelper.isPrimitive(pts[i])) {

@@ -19,8 +19,10 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.*;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -34,13 +36,14 @@ import org.springframework.util.StringUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author 周宁
  */
-public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProcessor {
+public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProcessor, ApplicationListener<ContextRefreshedEvent> {
 
     private ScopeMetadataResolver scopeMetadataResolver = new AnnotationScopeMetadataResolver();
 
@@ -55,15 +58,23 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
      * 例如:io.github.controller
      */
     private String classPackage;
+    /**
+     * 组成的请求地址前缀
+     */
+    private String requestPathPrefix;
 
     public void setClassPackage(String classPackage) {
         this.classPackage = classPackage;
         GenericReplaceBuilder.initGenericReplaceBuilder(classPackage);
     }
 
+    public void setRequestPathPrefix(String requestPathPrefix) {
+        this.requestPathPrefix = requestPathPrefix;
+    }
+
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        if(beanFactory instanceof BeanDefinitionRegistry){
+        if (beanFactory instanceof BeanDefinitionRegistry) {
             BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
             try {
                 String[] beanDefinitionNames = registry.getBeanDefinitionNames();
@@ -200,7 +211,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
             AnnotationsAttribute mthAnnoAttrs = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
             Annotation mthAno = new Annotation("org.springframework.web.bind.annotation.RequestMapping", constpool);
             ArrayMemberValue valueArr = new ArrayMemberValue(constpool);
-            valueArr.setValue(new StringMemberValue[]{new StringMemberValue(ctMethodHelper.requestMappingPath(), constpool)});
+            valueArr.setValue(new StringMemberValue[]{new StringMemberValue(ctMethodHelper.requestMappingPath(requestPathPrefix), constpool)});
             mthAno.addMemberValue("value", valueArr);
             ArrayMemberValue methodArr = new ArrayMemberValue(constpool);
             EnumMemberValue emv = new EnumMemberValue(constpool);
@@ -229,5 +240,26 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
     @Override
     public void setEnvironment(Environment environment) {
         this.environment = environment;
+    }
+
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+        String psp = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
+                resolveBasePackage(classPackage) + "**/*" + Constants.DUBBO_CONTROLLER_SUFFIX + ".class";
+        String psp2 = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
+                resolveBasePackage(classPackage) + "**/" + Constants.REPLACE_GENERIC_CLASS_PREFIX + "*.class";
+        List<String> packageSearchPaths = Arrays.asList(psp, psp2);
+        try {
+            for (String packageSearchPath : packageSearchPaths) {
+                Resource[] resources = this.resourcePatternResolver.getResources(packageSearchPath);
+                if (resources != null && resources.length > 0) {
+                    for (Resource resource : resources) {
+                        resource.getFile().delete();
+                    }
+                }
+            }
+        } catch (IOException e) {
+
+        }
     }
 }

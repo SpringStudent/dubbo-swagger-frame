@@ -17,4 +17,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface EnableDubboSwagger {
 
     String classPackage();
+
+    String requestPathPrefix() default "";
 }

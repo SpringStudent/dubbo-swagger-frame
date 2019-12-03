@@ -13,18 +13,22 @@ import static org.springframework.beans.factory.support.BeanDefinitionBuilder.ro
 
 /**
  * @author 周宁
- * @Date 2019-12-03 13:33
  */
 public class DubboSwaggerRegistar implements ImportBeanDefinitionRegistrar {
+
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(
                 importingClassMetadata.getAnnotationAttributes(EnableDubboSwagger.class.getName()));
-        String basePackages = attributes.getString("classPackage");
+        String classPackage = attributes.getString("classPackage");
+        String requestPathPrefix = attributes.getString("requestPathPrefix");
         BeanDefinitionBuilder builder = rootBeanDefinition(ApiServiceScanner.class);
         builder.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
-        builder.addPropertyValue("classPackage",basePackages);
+        builder.addPropertyValue("classPackage", classPackage);
+        builder.addPropertyValue("requestPathPrefix", requestPathPrefix);
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
         BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinition, registry);
     }
+
 }
