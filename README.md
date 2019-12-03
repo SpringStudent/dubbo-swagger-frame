@@ -25,7 +25,7 @@ TODO LIST:
 
 ```xml
 <bean id="apiServiceScanner" class="io.github.springstudent.core.ApiServiceScanner">    
-    <!--扫描器生成类的存放包，根据项目调整-->
+    <!--扫描器生成类的存放包，根据项目调整,该目录必须能够被spring扫描到-->
     <property name="classPackage" value="com.gysoft.file.file.controller"/></bean>
 ```
 
