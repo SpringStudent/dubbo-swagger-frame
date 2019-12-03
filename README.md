@@ -1,4 +1,5 @@
 **实现原理**
+
 使用javassist生成dubbo服务的controller注册到容器，然后这些服务生成的controller就可以被swagger扫描
 
 **添加maven坐标**
