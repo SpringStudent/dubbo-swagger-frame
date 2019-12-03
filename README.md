@@ -21,7 +21,7 @@ TODO LIST:
 </dependency>    
 ```
 
-**配置扫描DubboApi的扫描器**
+**Xml配置扫描DubboApi的扫描器**
 
 ```xml
 <bean id="apiServiceScanner" class="io.github.springstudent.core.ApiServiceScanner">    
@@ -29,3 +29,18 @@ TODO LIST:
     <property name="classPackage" value="com.gysoft.file.file.controller"/></bean>
 ```
 
+**代码配置扫描DubboApi的扫描器**
+
+```java
+@Configuration
+public class DubboSwaggerConfig {
+
+    @Bean
+    public ApiServiceScanner apiServiceScanner(){
+        ApiServiceScanner apiServiceScanner = new ApiServiceScanner();
+        apiServiceScanner.setClassPackage("ning.zhou.study.springboot.studyspringboot.web");
+        return apiServiceScanner;
+    }
+}
+
+```
