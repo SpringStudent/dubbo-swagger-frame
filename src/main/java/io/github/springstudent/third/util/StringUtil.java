@@ -1,6 +1,8 @@
 package io.github.springstudent.third.util;
 
-public class StringUtil {
+import org.apache.commons.lang3.StringUtils;
+
+public class StringUtil extends StringUtils {
     private static final char SEPARATOR = '_';
 
     public static String toCamelCase(String s) {

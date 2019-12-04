@@ -62,6 +62,10 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
      * 组成的请求地址前缀
      */
     private String requestPathPrefix;
+    /**
+     * 参数合并配置
+     */
+    private boolean mergeParam;
 
     public void setClassPackage(String classPackage) {
         this.classPackage = classPackage;
@@ -70,6 +74,10 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
 
     public void setRequestPathPrefix(String requestPathPrefix) {
         this.requestPathPrefix = requestPathPrefix;
+    }
+
+    public void setMergeParam(boolean mergeParam) {
+        this.mergeParam = mergeParam;
     }
 
     @Override
@@ -152,7 +160,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         return !(existingDefinition instanceof ScannedGenericBeanDefinition) || newDefinition.getSource().equals(existingDefinition.getSource()) || newDefinition.equals(existingDefinition);
     }
 
-    private Class<?> createController(String interfaceName) throws IOException, CannotCompileException, NotFoundException, NoSuchMethodException {
+    private Class<?> createController(String interfaceName) throws IOException, CannotCompileException, NotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException {
         Class<?> interfaceClass = null;
         try {
             interfaceClass = Class.forName(interfaceName, true, Thread.currentThread()
@@ -163,7 +171,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         return writerCompiler(interfaceClass);
     }
 
-    public Class<?> writerCompiler(Class<?> clss) throws CannotCompileException, IOException, NotFoundException, NoSuchMethodException {
+    public Class<?> writerCompiler(Class<?> clss) throws CannotCompileException, IOException, NotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         ClassPool pool = new ClassPool();
         pool.appendClassPath(new LoaderClassPath(ClassHelper.getCallerClassLoader(getClass())));
         //导包
@@ -220,7 +228,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
             methodArr.setValue(new EnumMemberValue[]{emv});
             mthAno.addMemberValue("method", methodArr);
             mthAnnoAttrs.setAnnotation(mthAno);
-            CtMethod mthd = CtNewMethod.make(ctMethodHelper.methodBody(), cls);
+            CtMethod mthd = CtNewMethod.make(ctMethodHelper.methodBody(mergeParam), cls);
             ParameterAnnotationsAttribute parameterAtrribute = new ParameterAnnotationsAttribute(constpool, ParameterAnnotationsAttribute.visibleTag);
             parameterAtrribute.setAnnotations(ctMethodHelper.methodParamAnnotation());
             cls.addMethod(mthd);
@@ -262,4 +270,5 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
 
         }
     }
+
 }

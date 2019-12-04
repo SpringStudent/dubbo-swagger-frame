@@ -23,7 +23,6 @@ import java.io.FileOutputStream;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
 public class GenericReplaceBuilder {
     private static final ClassPool pool = ClassPool.getDefault();
     private static ConcurrentHashMap<String, Class> classMap = new ConcurrentHashMap<String, Class>();
@@ -31,6 +30,10 @@ public class GenericReplaceBuilder {
 
     public static void initGenericReplaceBuilder(String classPackage){
         GenericReplaceBuilder.classPackage = classPackage;
+    }
+
+    public static String getClassPackage(){
+        return classPackage;
     }
 
     public static Class buildReplaceClass(Type type, Map<String, Class> genericClassMap) {

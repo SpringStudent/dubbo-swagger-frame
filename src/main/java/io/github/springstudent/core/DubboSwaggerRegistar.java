@@ -23,10 +23,12 @@ public class DubboSwaggerRegistar implements ImportBeanDefinitionRegistrar {
                 importingClassMetadata.getAnnotationAttributes(EnableDubboSwagger.class.getName()));
         String classPackage = attributes.getString("classPackage");
         String requestPathPrefix = attributes.getString("requestPathPrefix");
+        boolean mergeParam = attributes.getBoolean("mergeParam");
         BeanDefinitionBuilder builder = rootBeanDefinition(ApiServiceScanner.class);
         builder.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
         builder.addPropertyValue("classPackage", classPackage);
         builder.addPropertyValue("requestPathPrefix", requestPathPrefix);
+        builder.addPropertyValue("mergeParam", mergeParam);
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
         BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinition, registry);
     }

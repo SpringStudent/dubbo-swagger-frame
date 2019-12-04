@@ -91,32 +91,37 @@ public class ClassHelper {
         List<String> result = new ArrayList<>();
         for (MethodInfo methodInfo : methodInfos) {
             final List attributes = methodInfo.getAttributes();
-            String temp = null;
-            for (Object attribute : attributes) {
-                if (attribute instanceof SignatureAttribute) {
-                    SignatureAttribute signatureAttribute = (SignatureAttribute) attribute;
-                    final byte info = signatureAttribute.get()[1];
-                    temp = signatureAttribute.getConstPool().getUtf8Info(Byte.toUnsignedInt(info));
-                    break;
-                } else if (attribute instanceof AnnotationsAttribute) {
-                    AnnotationsAttribute annotationAttributes = (AnnotationsAttribute) attribute;
-                    final Annotation[] annotations = annotationAttributes.getAnnotations();
-                    for (Annotation annotation : annotations) {
-                        result.add(annotation.getTypeName());
-                        for (Object memberName : annotation.getMemberNames()) {
-                            final MemberValue memberValue = annotation.getMemberValue((String) memberName);
-                            if (memberValue instanceof EnumMemberValue) {
-                                EnumMemberValue value = (EnumMemberValue) memberValue;
-                                result.add(value.getType());
+            if(attributes!=null&&attributes.size()>0){
+                String temp = null;
+                for (Object attribute : attributes) {
+                    if (attribute instanceof SignatureAttribute) {
+                        SignatureAttribute signatureAttribute = (SignatureAttribute) attribute;
+                        final byte info = signatureAttribute.get()[1];
+                        temp = signatureAttribute.getConstPool().getUtf8Info(Byte.toUnsignedInt(info));
+                        break;
+                    } else if (attribute instanceof AnnotationsAttribute) {
+                        AnnotationsAttribute annotationAttributes = (AnnotationsAttribute) attribute;
+                        final Annotation[] annotations = annotationAttributes.getAnnotations();
+                        for (Annotation annotation : annotations) {
+                            result.add(annotation.getTypeName());
+                            for (Object memberName : annotation.getMemberNames()) {
+                                final MemberValue memberValue = annotation.getMemberValue((String) memberName);
+                                if (memberValue instanceof EnumMemberValue) {
+                                    EnumMemberValue value = (EnumMemberValue) memberValue;
+                                    result.add(value.getType());
+                                }
                             }
                         }
+                    } else {
+                        temp = methodInfo.getDescriptor();
                     }
-                } else {
-                    temp = methodInfo.getDescriptor();
                 }
+                result.add(temp);
+            }else{
+                result.add(methodInfo.getDescriptor());
             }
-            result.add(temp);
         }
+
         Set<String> importPackages = new HashSet<>();
         for (String ms : result) {
             if (!StringUtils.isEmpty(ms)) {

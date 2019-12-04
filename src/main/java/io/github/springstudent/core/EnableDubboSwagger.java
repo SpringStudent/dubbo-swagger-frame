@@ -19,4 +19,6 @@ public @interface EnableDubboSwagger {
     String classPackage();
 
     String requestPathPrefix() default "";
+
+    boolean mergeParam() default true;
 }
