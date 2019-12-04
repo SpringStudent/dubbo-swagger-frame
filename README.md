@@ -23,5 +23,7 @@
 `requestPathPrefix`请求服务地址的前缀配置，比如你有一个dubbo service的方法名称为`pageQuery`，`requestPathPrefix`配置为`pass`,那么在请求该方法时的path会变成`/pass/pageQuery`
 
 `mergeParam`开启合并参数,为什么要开启合并参数，dubbo api的参数比较复杂时，生成的controller会有多个`@RequestBody`，SpringMVC并不支持两个或者以上的`@RequestBody`传参，在mergeParam(默认开启)开启的场景下会将多个@RequestBody参数合并成一个。
+
 **dubbo-swagger-demo**
+
 https://github.com/SpringStudent/dubbo-swagger-demo

@@ -21,7 +21,6 @@ public class ReflectUtil {
         }
     }
 
-
     public static Field getDeclaredField(Class clazz, String fieldName) {
         try {
             return clazz.getDeclaredField(fieldName);
