@@ -1,6 +1,5 @@
 package io.github.springstudent.core;
 
-import com.alibaba.fastjson.JSON;
 import io.github.springstudent.third.GenericReplaceBuilder;
 import io.github.springstudent.third.util.JavassistUtil;
 import io.github.springstudent.third.util.StringUtil;
@@ -20,7 +19,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -63,7 +61,7 @@ public class CtMethodHelper {
 
     private String joinInvokerArgs;
 
-    CtMethodHelper(Method method, Class<?> clss, ConstPool constPool) {
+    CtMethodHelper(Method method, Class<?> clss, ConstPool constPool,boolean mergeParam) throws CannotCompileException, InstantiationException, IllegalAccessException, NotFoundException, IOException {
         this.method = method;
         this.rt = method.getReturnType();
         this.pts = method.getParameterTypes();
@@ -72,10 +70,12 @@ public class CtMethodHelper {
         this.clss = clss;
         this.constPool = constPool;
         this.tps = method.getGenericParameterTypes();
+        doMergeParam(mergeParam);
     }
 
 
-    public String requestMappingPath(String requestPathPrefix) {
+    public String requestMappingPath(String requestPathPrefix){
+
         StringBuilder mappingPath = new StringBuilder("/");
         if (StringUtils.isNotEmpty(requestPathPrefix)) {
             mappingPath.append(requestPathPrefix).append("/");
@@ -89,21 +89,20 @@ public class CtMethodHelper {
         return mappingPath.toString();
     }
 
-    public String methodBody(boolean mergeParam) throws NotFoundException, CannotCompileException, IOException, IllegalAccessException, InstantiationException {
-        doMergeParam(mergeParam);
+    public String methodBody() {
         StringBuilder methodBody = new StringBuilder("public ");
         methodBody.append(ClassHelper.getName(rt)).append(' ').append(methodName).append('(');
         StringBuilder methodImpl = new StringBuilder(OsUtil.lowerFirst(clss.getSimpleName()));
         methodImpl.append(".").append(methodName).append("(");
         //如果进行了参数合并且参数合并了
-        if (mergeParam && tps.length != pts.length) {
+        if (tps.length != pts.length) {
             for (int i = 0; i < pts.length; i++) {
                 if (i > 0) {
                     methodBody.append(',');
                 }
                 methodBody.append(ClassHelper.getName(pts[i]));
                 methodBody.append(" arg").append(i);
-                if(AbstractRequestBodyParamsWrapper.class.isAssignableFrom(pts[i])){
+                if (AbstractRequestBodyParamsWrapper.class.isAssignableFrom(pts[i])) {
                     methodImpl.append(joinInvokerArgs);
                 }
             }
@@ -177,14 +176,14 @@ public class CtMethodHelper {
         CtField ctField = null;
         StringBuilder fieldAppender = null;
         String[] invokerArgs = new String[tps.length];
-        int newArgLen = tps.length-mergeParamInfos.size();
+        int newArgLen = tps.length - mergeParamInfos.size();
         StringBuilder invokerArgAppender = null;
         for (int i = 0; i < mergeParamInfos.size(); i++) {
             MergeParamInfo mergeParamInfo = mergeParamInfos.get(i);
-            if(mergeParamInfo.getReplaceClss().getPackage()!=null){
+            if (mergeParamInfo.getReplaceClss().getPackage() != null) {
                 pool.importPackage(mergeParamInfo.getReplaceClss().getPackage().getName() + "." + mergeParamInfo.getReplaceClss().getSimpleName());
             }
-            if(mergeParamInfo.getOriginClss().getPackage()!=null){
+            if (mergeParamInfo.getOriginClss().getPackage() != null) {
                 pool.importPackage(mergeParamInfo.getOriginClss().getPackage().getName() + "." + mergeParamInfo.getOriginClss().getSimpleName());
             }
             fieldAppender = new StringBuilder().append("private ").append(mergeParamInfo.getReplaceClss().getSimpleName()).append(" ")
@@ -199,14 +198,13 @@ public class CtMethodHelper {
                     .append(")").append(",").append(mergeParamInfo.getOriginClss().getSimpleName() + ".class").append(")");
             invokerArgs[mergeParamInfo.getPtsInx()] = invokerArgAppender.toString();
         }
+        int argInx = 0;
         for (int i = 0; i < invokerArgs.length; i++) {
             if (StringUtils.isEmpty(invokerArgs[i])) {
-                invokerArgs[i] = "arg" + i;
+                invokerArgs[i] = "arg" + argInx++;
             }
         }
-
-        joinInvokerArgs = StringUtil.join(invokerArgs,',');
-
+        joinInvokerArgs = StringUtil.join(invokerArgs, ',');
         FileOutputStream fos = new FileOutputStream(new File(OsUtil.pathJoin(ClassHelper.getClassPath(), OsUtil.packagePath(GenericReplaceBuilder.getClassPackage()), requestBodyParamsWrapperClssName + ".class")));
         fos.write(requestBodyParamsWrapperCtClass.toBytecode());
         fos.close();

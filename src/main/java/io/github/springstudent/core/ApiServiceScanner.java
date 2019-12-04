@@ -214,7 +214,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         //方法生成
         java.lang.reflect.Method[] methods = clss.getDeclaredMethods();
         for (java.lang.reflect.Method method : methods) {
-            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool);
+            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool, mergeParam);
             //方法注解
             AnnotationsAttribute mthAnnoAttrs = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
             Annotation mthAno = new Annotation("org.springframework.web.bind.annotation.RequestMapping", constpool);
@@ -228,7 +228,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
             methodArr.setValue(new EnumMemberValue[]{emv});
             mthAno.addMemberValue("method", methodArr);
             mthAnnoAttrs.setAnnotation(mthAno);
-            CtMethod mthd = CtNewMethod.make(ctMethodHelper.methodBody(mergeParam), cls);
+            CtMethod mthd = CtNewMethod.make(ctMethodHelper.methodBody(), cls);
             ParameterAnnotationsAttribute parameterAtrribute = new ParameterAnnotationsAttribute(constpool, ParameterAnnotationsAttribute.visibleTag);
             parameterAtrribute.setAnnotations(ctMethodHelper.methodParamAnnotation());
             cls.addMethod(mthd);
@@ -256,7 +256,9 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
                 resolveBasePackage(classPackage) + "**/*" + Constants.DUBBO_CONTROLLER_SUFFIX + ".class";
         String psp2 = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
                 resolveBasePackage(classPackage) + "**/" + Constants.REPLACE_GENERIC_CLASS_PREFIX + "*.class";
-        List<String> packageSearchPaths = Arrays.asList(psp, psp2);
+        String psp3 = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
+                resolveBasePackage(classPackage) + "**/" + Constants.REQUEST_BODY_PARAMS_WRAPER_CLASS_PREFIX + "*.class";
+        List<String> packageSearchPaths = Arrays.asList(psp, psp2, psp3);
         try {
             for (String packageSearchPath : packageSearchPaths) {
                 Resource[] resources = this.resourcePatternResolver.getResources(packageSearchPath);
