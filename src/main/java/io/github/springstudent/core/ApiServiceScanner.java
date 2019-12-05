@@ -36,9 +36,7 @@ import org.springframework.util.StringUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author 周宁
@@ -198,6 +196,9 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         AnnotationsAttribute annotationsAttribute = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
         Annotation rcAnnotation = new Annotation("org.springframework.web.bind.annotation.RestController", constpool);
         Annotation rmAnnotation = new Annotation("org.springframework.web.bind.annotation.RequestMapping", constpool);
+        ArrayMemberValue amv = new ArrayMemberValue(constpool);
+        amv.setValue(new StringMemberValue[]{new StringMemberValue(packageName+"."+clss.getSimpleName(), constpool)});
+        rmAnnotation.addMemberValue("value",amv);
         Annotation apiAnnotation = new Annotation("io.swagger.annotations.Api", constpool);
         annotationsAttribute.addAnnotation(rcAnnotation);
         annotationsAttribute.addAnnotation(rmAnnotation);
@@ -213,8 +214,17 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         ctField.getFieldInfo().addAttribute(fieldAnnoAttrs);
         //方法生成
         java.lang.reflect.Method[] methods = clss.getDeclaredMethods();
+        Map<String, Integer> methodNameTimes = new HashMap<>();
         for (java.lang.reflect.Method method : methods) {
-            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool, mergeParam);
+            String methodName = method.getName();
+            if (methodNameTimes.get(methodName) == null) {
+                methodNameTimes.put(methodName, 1);
+            } else {
+                Integer methodTime = methodNameTimes.get(methodName) + 1;
+                methodNameTimes.put(methodName, methodTime);
+            }
+            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool, buildMethodName(methodNameTimes, methodName), mergeParam);
+
             //方法注解
             AnnotationsAttribute mthAnnoAttrs = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
             Annotation mthAno = new Annotation("org.springframework.web.bind.annotation.RequestMapping", constpool);
@@ -239,6 +249,15 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         fos.write(cls.toBytecode());
         fos.close();
         return cls.toClass(ClassHelper.getCallerClassLoader(getClass()), ApiServiceScanner.class.getProtectionDomain());
+    }
+
+    private String buildMethodName(Map<String, Integer> methodNameTimes, String methodName) {
+        int methodTime = methodNameTimes.get(methodName);
+        if (methodTime > 1) {
+            return methodName + (methodTime - 1);
+        } else {
+            return methodName;
+        }
     }
 
     protected String resolveBasePackage(String basePackage) {

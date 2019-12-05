@@ -33,7 +33,7 @@ public class CtMethodHelper {
      */
     private Method method;
     /**
-     * 方法名称
+     * 方法名
      */
     private String methodName;
     /**
@@ -63,12 +63,12 @@ public class CtMethodHelper {
 
     private String joinInvokerArgs;
 
-    CtMethodHelper(Method method, Class<?> clss, ConstPool constPool, boolean mergeParam) throws CannotCompileException, InstantiationException, IllegalAccessException, NotFoundException, IOException {
+    CtMethodHelper(Method method, Class<?> clss, ConstPool constPool,String methodName, boolean mergeParam) throws CannotCompileException, InstantiationException, IllegalAccessException, NotFoundException, IOException {
         this.method = method;
         this.rt = method.getReturnType();
         this.pts = method.getParameterTypes();
         this.ets = method.getExceptionTypes();
-        this.methodName = method.getName();
+        this.methodName = methodName;
         this.clss = clss;
         this.constPool = constPool;
         this.tps = method.getGenericParameterTypes();
@@ -77,7 +77,6 @@ public class CtMethodHelper {
 
 
     public String requestMappingPath(String requestPathPrefix) {
-
         StringBuilder mappingPath = new StringBuilder("/");
         if (StringUtils.isNotEmpty(requestPathPrefix)) {
             mappingPath.append(requestPathPrefix).append("/");
@@ -95,7 +94,7 @@ public class CtMethodHelper {
         StringBuilder methodBody = new StringBuilder("public ");
         methodBody.append(ClassHelper.getName(rt)).append(' ').append(methodName).append('(');
         StringBuilder methodImpl = new StringBuilder(OsUtil.lowerFirst(clss.getSimpleName()));
-        methodImpl.append(".").append(methodName).append("(");
+        methodImpl.append(".").append(method.getName()).append("(");
         //如果进行了参数合并且参数合并了
         if (tps.length != pts.length) {
             for (int i = 0; i < pts.length; i++) {
