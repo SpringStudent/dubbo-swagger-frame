@@ -223,8 +223,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
                 Integer methodTime = methodNameTimes.get(methodName) + 1;
                 methodNameTimes.put(methodName, methodTime);
             }
-            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool, buildMethodName(methodNameTimes, methodName), mergeParam,importPackages);
-
+            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool,buildMethodName(methodNameTimes, methodName) , mergeParam,importPackages);
             //方法注解
             AnnotationsAttribute mthAnnoAttrs = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
             Annotation mthAno = new Annotation("org.springframework.web.bind.annotation.RequestMapping", constpool);
@@ -254,7 +253,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
     private String buildMethodName(Map<String, Integer> methodNameTimes, String methodName) {
         int methodTime = methodNameTimes.get(methodName);
         if (methodTime > 1) {
-            return methodName + (methodTime - 1);
+            return methodName + (methodTime - 1)+Constants.REPEAT_METHOD_NAME_SUFFIX;
         } else {
             return methodName;
         }
