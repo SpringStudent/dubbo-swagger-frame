@@ -23,16 +23,17 @@ import java.io.FileOutputStream;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
 public class GenericReplaceBuilder {
     private static final ClassPool pool = ClassPool.getDefault();
     private static ConcurrentHashMap<String, Class> classMap = new ConcurrentHashMap<String, Class>();
     private static String classPackage;
 
-    public static void initGenericReplaceBuilder(String classPackage){
+    public static void initGenericReplaceBuilder(String classPackage) {
         GenericReplaceBuilder.classPackage = classPackage;
     }
 
-    public static String getClassPackage(){
+    public static String getClassPackage() {
         return classPackage;
     }
 
@@ -54,17 +55,14 @@ public class GenericReplaceBuilder {
     }
 
     public static Class buildGenericArrayClass(GenericArrayInfo genericArrayInfo, Map<String, Class> genericClassMap) {
-
         Object info = genericArrayInfo.getInfo();
         if (null == info) {
             return null;
         }
-
         Class clazz = null;
         if (info instanceof String) {
             clazz = null == genericClassMap ? null : genericClassMap.get((String) info);
             clazz = null == clazz ? Object.class : clazz;
-
         } else if (info instanceof GenericInfo) {
             clazz = buildGenericClass((GenericInfo) info, genericClassMap);
         } else if (info instanceof GenericArrayInfo) {
@@ -74,7 +72,6 @@ public class GenericReplaceBuilder {
         } else {
             clazz = Object.class;
         }
-
         return ReflectUtil.getArrayClass(clazz);
     }
 
@@ -103,8 +100,8 @@ public class GenericReplaceBuilder {
             if (classMap.containsKey(featureName)) {
                 return classMap.get(featureName);
             }
-            String newReplaceClassName = Constants.REPLACE_GENERIC_CLASS_PREFIX + genericClass.getSimpleName();
-            CtClass newReturnCtClass = pool.makeClass(classPackage+"." + newReplaceClassName);
+            String newReplaceClassName = ClassNameBuilder.buildReplaceClassName(genericClass.getSimpleName());
+            CtClass newReturnCtClass = pool.makeClass(classPackage + "." + newReplaceClassName);
             Map<String, Tuple2<Class, Method>> fieldTuples = buildNewPropertyInfos(genericClass);
             buildfieldTuples(fieldTuples, genericClassMap, genericClass);
             for (String fieldName : fieldTuples.keySet()) {

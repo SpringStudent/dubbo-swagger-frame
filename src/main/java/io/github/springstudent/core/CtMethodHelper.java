@@ -108,7 +108,6 @@ public class CtMethodHelper {
                     methodImpl.append(joinInvokerArgs);
                 }
             }
-
         } else {
             for (int i = 0; i < tps.length; i++) {
                 if (i > 0) {
