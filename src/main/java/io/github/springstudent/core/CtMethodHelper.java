@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -61,7 +63,7 @@ public class CtMethodHelper {
 
     private String joinInvokerArgs;
 
-    CtMethodHelper(Method method, Class<?> clss, ConstPool constPool,boolean mergeParam) throws CannotCompileException, InstantiationException, IllegalAccessException, NotFoundException, IOException {
+    CtMethodHelper(Method method, Class<?> clss, ConstPool constPool, boolean mergeParam) throws CannotCompileException, InstantiationException, IllegalAccessException, NotFoundException, IOException {
         this.method = method;
         this.rt = method.getReturnType();
         this.pts = method.getParameterTypes();
@@ -74,7 +76,7 @@ public class CtMethodHelper {
     }
 
 
-    public String requestMappingPath(String requestPathPrefix){
+    public String requestMappingPath(String requestPathPrefix) {
 
         StringBuilder mappingPath = new StringBuilder("/");
         if (StringUtils.isNotEmpty(requestPathPrefix)) {
@@ -149,16 +151,19 @@ public class CtMethodHelper {
     private void doMergeParam(boolean mergeParam) throws NotFoundException, CannotCompileException, IOException, InstantiationException, IllegalAccessException {
         if (mergeParam) {
             Class<?>[] newPts = {};
+            int buildReplaceClassTimes = 0;
             List<MergeParamInfo> mergeParamInfos = new ArrayList<>();
             for (int i = 0; i < pts.length; i++) {
                 if (!ClassHelper.isPrimitive(pts[i])) {
+                    buildReplaceClassTimes = buildReplaceClassTimes + 1;
                     mergeParamInfos.add(new MergeParamInfo(i, pts[i], GenericReplaceBuilder.buildReplaceClass(tps[i], null)));
                 } else {
+                    mergeParamInfos.add(new MergeParamInfo(i, pts[i], null).setInvokerArg("arg" + (i - buildReplaceClassTimes)));
                     newPts = ArrayUtils.add(newPts, pts[i]);
                 }
             }
-            if (mergeParamInfos.size() > 1) {
-                Class<? extends AbstractRequestBodyParamsWrapper> requestBodyParamsWrapper = buildRequestBodyParamsWrapperClass(mergeParamInfos);
+            if (buildReplaceClassTimes > 1) {
+                Class<? extends AbstractRequestBodyParamsWrapper> requestBodyParamsWrapper = buildRequestBodyParamsWrapperClass(mergeParamInfos, buildReplaceClassTimes);
                 newPts = ArrayUtils.add(newPts, requestBodyParamsWrapper);
                 pts = newPts;
             }
@@ -168,7 +173,7 @@ public class CtMethodHelper {
 
     private static AtomicLong requestBodyParamsWrapperClssInx = new AtomicLong(0);
 
-    private Class<? extends AbstractRequestBodyParamsWrapper> buildRequestBodyParamsWrapperClass(List<MergeParamInfo> mergeParamInfos) throws NotFoundException, CannotCompileException, IOException, IllegalAccessException, InstantiationException {
+    private Class<? extends AbstractRequestBodyParamsWrapper> buildRequestBodyParamsWrapperClass(List<MergeParamInfo> mergeParamInfos, int buildReplaceClassTimes) throws NotFoundException, CannotCompileException, IOException, IllegalAccessException, InstantiationException {
         ClassPool pool = ClassPool.getDefault();
         String requestBodyParamsWrapperClssName = Constants.REQUEST_BODY_PARAMS_WRAPER_CLASS_PREFIX + AbstractRequestBodyParamsWrapper.class.getSimpleName() + requestBodyParamsWrapperClssInx.getAndIncrement();
         CtClass requestBodyParamsWrapperCtClass = pool.makeClass(GenericReplaceBuilder.getClassPackage() + "." + requestBodyParamsWrapperClssName
@@ -176,32 +181,38 @@ public class CtMethodHelper {
         CtField ctField = null;
         StringBuilder fieldAppender = null;
         String[] invokerArgs = new String[tps.length];
-        int newArgLen = tps.length - mergeParamInfos.size();
+        int newArgLen = tps.length - buildReplaceClassTimes;
         StringBuilder invokerArgAppender = null;
+        Map<Class<?>, Integer> replaceClssTimeMap = new HashMap();
         for (int i = 0; i < mergeParamInfos.size(); i++) {
             MergeParamInfo mergeParamInfo = mergeParamInfos.get(i);
-            if (mergeParamInfo.getReplaceClss().getPackage() != null) {
-                pool.importPackage(mergeParamInfo.getReplaceClss().getPackage().getName() + "." + mergeParamInfo.getReplaceClss().getSimpleName());
-            }
-            if (mergeParamInfo.getOriginClss().getPackage() != null) {
-                pool.importPackage(mergeParamInfo.getOriginClss().getPackage().getName() + "." + mergeParamInfo.getOriginClss().getSimpleName());
-            }
-            fieldAppender = new StringBuilder().append("private ").append(mergeParamInfo.getReplaceClss().getSimpleName()).append(" ")
-                    .append(OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName())).append(";");
-            ctField = CtField.make(fieldAppender.toString(), requestBodyParamsWrapperCtClass);
-            requestBodyParamsWrapperCtClass.addField(ctField);
-            JavassistUtil.addGetterForCtField(ctField);
-            JavassistUtil.addSetterForCtField(ctField);
-            invokerArgAppender = new StringBuilder("(").append(mergeParamInfo.getOriginClss().getSimpleName()).append(")")
-                    .append("JSON.parseObject(").append("JSON.toJSONString(").append("arg").append(newArgLen)
-                    .append(".get").append(mergeParamInfo.getOriginClss().getSimpleName()).append("()")
-                    .append(")").append(",").append(mergeParamInfo.getOriginClss().getSimpleName() + ".class").append(")");
-            invokerArgs[mergeParamInfo.getPtsInx()] = invokerArgAppender.toString();
-        }
-        int argInx = 0;
-        for (int i = 0; i < invokerArgs.length; i++) {
-            if (StringUtils.isEmpty(invokerArgs[i])) {
-                invokerArgs[i] = "arg" + argInx++;
+            if (mergeParamInfo.getReplaceClss() != null) {
+                if (mergeParamInfo.getReplaceClss().getPackage() != null) {
+                    pool.importPackage(mergeParamInfo.getReplaceClss().getPackage().getName() + "." + mergeParamInfo.getReplaceClss().getSimpleName());
+                }
+                if (mergeParamInfo.getOriginClss().getPackage() != null) {
+                    pool.importPackage(mergeParamInfo.getOriginClss().getPackage().getName() + "." + mergeParamInfo.getOriginClss().getSimpleName());
+                }
+                if (replaceClssTimeMap.get(mergeParamInfo.getReplaceClss()) == null) {
+                    replaceClssTimeMap.put(mergeParamInfo.getReplaceClss(), 1);
+                } else {
+                    int replaceClssTime = replaceClssTimeMap.get(mergeParamInfo.getReplaceClss()) + 1;
+                    replaceClssTimeMap.put(mergeParamInfo.getReplaceClss(), replaceClssTime);
+                }
+                String fieldName = buildFieldName(replaceClssTimeMap, mergeParamInfo);
+                fieldAppender = new StringBuilder().append("private ").append(mergeParamInfo.getReplaceClss().getSimpleName()).append(" ")
+                        .append(fieldName).append(";");
+                ctField = CtField.make(fieldAppender.toString(), requestBodyParamsWrapperCtClass);
+                requestBodyParamsWrapperCtClass.addField(ctField);
+                JavassistUtil.addGetterForCtField(ctField);
+                JavassistUtil.addSetterForCtField(ctField);
+                invokerArgAppender = new StringBuilder("(").append(mergeParamInfo.getOriginClss().getSimpleName()).append(")")
+                        .append("JSON.parseObject(").append("JSON.toJSONString(").append("arg").append(newArgLen)
+                        .append(".get").append(OsUtil.upperFirst(fieldName)).append("()")
+                        .append(")").append(",").append(mergeParamInfo.getOriginClss().getSimpleName() + ".class").append(")");
+                invokerArgs[mergeParamInfo.getPtsInx()] = invokerArgAppender.toString();
+            } else {
+                invokerArgs[mergeParamInfo.getPtsInx()] = mergeParamInfo.getInvokerArg();
             }
         }
         joinInvokerArgs = StringUtil.join(invokerArgs, ',');
@@ -211,6 +222,14 @@ public class CtMethodHelper {
         return requestBodyParamsWrapperCtClass.toClass(ClassHelper.getCallerClassLoader(getClass()), CtMethodHelper.class.getProtectionDomain());
     }
 
+    private String buildFieldName(Map<Class<?>, Integer> replaceClssTimeMap, MergeParamInfo mergeParamInfo) {
+        int repeatTime = replaceClssTimeMap.get(mergeParamInfo.getReplaceClss());
+        if (repeatTime > 1) {
+            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName() + (repeatTime - 1));
+        } else {
+            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName());
+        }
+    }
 
     public Annotation[][] methodParamAnnotation() {
         Annotation[][] annotations = new Annotation[pts.length][1];
@@ -235,6 +254,8 @@ public class CtMethodHelper {
 
         private Class<?> replaceClss;
 
+        private String invokerArg;
+
         public int getPtsInx() {
             return ptsInx;
         }
@@ -257,6 +278,16 @@ public class CtMethodHelper {
 
         public void setOriginClss(Class<?> originClss) {
             this.originClss = originClss;
+        }
+
+
+        public String getInvokerArg() {
+            return invokerArg;
+        }
+
+        public MergeParamInfo setInvokerArg(String invokerArg) {
+            this.invokerArg = invokerArg;
+            return this;
         }
 
         public MergeParamInfo(int ptsInx, Class<?> orginClss, Class<?> replaceClss) {
