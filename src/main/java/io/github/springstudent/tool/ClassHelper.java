@@ -91,7 +91,7 @@ public class ClassHelper {
         List<String> result = new ArrayList<>();
         for (MethodInfo methodInfo : methodInfos) {
             final List attributes = methodInfo.getAttributes();
-            if(attributes!=null&&attributes.size()>0){
+            if (attributes != null && attributes.size() > 0) {
                 String temp = null;
                 for (Object attribute : attributes) {
                     if (attribute instanceof SignatureAttribute) {
@@ -117,7 +117,8 @@ public class ClassHelper {
                     }
                 }
                 result.add(temp);
-            }else{
+                result.add(methodInfo.getDescriptor());
+            } else {
                 result.add(methodInfo.getDescriptor());
             }
         }

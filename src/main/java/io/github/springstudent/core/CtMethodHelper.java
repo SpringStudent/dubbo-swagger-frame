@@ -18,10 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -63,7 +60,9 @@ public class CtMethodHelper {
 
     private String joinInvokerArgs;
 
-    CtMethodHelper(Method method, Class<?> clss, ConstPool constPool,String methodName, boolean mergeParam) throws CannotCompileException, InstantiationException, IllegalAccessException, NotFoundException, IOException {
+    private Set<String> importPackages;
+
+    CtMethodHelper(Method method, Class<?> clss, ConstPool constPool, String methodName, boolean mergeParam, Set<String> importPackages) throws CannotCompileException, InstantiationException, IllegalAccessException, NotFoundException, IOException {
         this.method = method;
         this.rt = method.getReturnType();
         this.pts = method.getParameterTypes();
@@ -72,7 +71,9 @@ public class CtMethodHelper {
         this.clss = clss;
         this.constPool = constPool;
         this.tps = method.getGenericParameterTypes();
+        this.importPackages = importPackages;
         doMergeParam(mergeParam);
+
     }
 
 
@@ -182,21 +183,26 @@ public class CtMethodHelper {
         String[] invokerArgs = new String[tps.length];
         int newArgLen = tps.length - buildReplaceClassTimes;
         StringBuilder invokerArgAppender = null;
-        Map<Class<?>, Integer> replaceClssTimeMap = new HashMap();
+        Map<String, Integer> replaceClssTimeMap = new HashMap();
         for (int i = 0; i < mergeParamInfos.size(); i++) {
             MergeParamInfo mergeParamInfo = mergeParamInfos.get(i);
             if (mergeParamInfo.getReplaceClss() != null) {
                 if (mergeParamInfo.getReplaceClss().getPackage() != null) {
                     pool.importPackage(mergeParamInfo.getReplaceClss().getPackage().getName() + "." + mergeParamInfo.getReplaceClss().getSimpleName());
+                }else{
+                    pool.importPackage(mergeParamInfo.getReplaceClss().getTypeName().replace("[]",""));
                 }
                 if (mergeParamInfo.getOriginClss().getPackage() != null) {
                     pool.importPackage(mergeParamInfo.getOriginClss().getPackage().getName() + "." + mergeParamInfo.getOriginClss().getSimpleName());
                 }
-                if (replaceClssTimeMap.get(mergeParamInfo.getReplaceClss()) == null) {
-                    replaceClssTimeMap.put(mergeParamInfo.getReplaceClss(), 1);
+                for (String ipc : importPackages) {
+                    pool.importPackage(ipc);
+                }
+                if (replaceClssTimeMap.get(mergeParamInfo.getOriginClss().getSimpleName()) == null) {
+                    replaceClssTimeMap.put(mergeParamInfo.getOriginClss().getSimpleName(), 1);
                 } else {
-                    int replaceClssTime = replaceClssTimeMap.get(mergeParamInfo.getReplaceClss()) + 1;
-                    replaceClssTimeMap.put(mergeParamInfo.getReplaceClss(), replaceClssTime);
+                    int replaceClssTime = replaceClssTimeMap.get(mergeParamInfo.getOriginClss().getSimpleName()) + 1;
+                    replaceClssTimeMap.put(mergeParamInfo.getOriginClss().getSimpleName(), replaceClssTime);
                 }
                 String fieldName = buildFieldName(replaceClssTimeMap, mergeParamInfo);
                 fieldAppender = new StringBuilder().append("private ").append(mergeParamInfo.getReplaceClss().getSimpleName()).append(" ")
@@ -221,9 +227,9 @@ public class CtMethodHelper {
         return requestBodyParamsWrapperCtClass.toClass(ClassHelper.getCallerClassLoader(getClass()), CtMethodHelper.class.getProtectionDomain());
     }
 
-    private String buildFieldName(Map<Class<?>, Integer> replaceClssTimeMap, MergeParamInfo mergeParamInfo) {
-        int repeatTime = replaceClssTimeMap.get(mergeParamInfo.getReplaceClss());
-        if (repeatTime > 1) {
+    private String buildFieldName(Map<String, Integer> replaceClssTimeMap, MergeParamInfo mergeParamInfo) {
+        Integer repeatTime = replaceClssTimeMap.get(mergeParamInfo.getOriginClss().getSimpleName());
+        if (repeatTime!=null&&repeatTime > 1) {
             return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName() + (repeatTime - 1));
         } else {
             return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName());

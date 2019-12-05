@@ -197,8 +197,8 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         Annotation rcAnnotation = new Annotation("org.springframework.web.bind.annotation.RestController", constpool);
         Annotation rmAnnotation = new Annotation("org.springframework.web.bind.annotation.RequestMapping", constpool);
         ArrayMemberValue amv = new ArrayMemberValue(constpool);
-        amv.setValue(new StringMemberValue[]{new StringMemberValue(packageName+"."+clss.getSimpleName(), constpool)});
-        rmAnnotation.addMemberValue("value",amv);
+        amv.setValue(new StringMemberValue[]{new StringMemberValue(packageName + "." + clss.getSimpleName(), constpool)});
+        rmAnnotation.addMemberValue("value", amv);
         Annotation apiAnnotation = new Annotation("io.swagger.annotations.Api", constpool);
         annotationsAttribute.addAnnotation(rcAnnotation);
         annotationsAttribute.addAnnotation(rmAnnotation);
@@ -223,7 +223,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
                 Integer methodTime = methodNameTimes.get(methodName) + 1;
                 methodNameTimes.put(methodName, methodTime);
             }
-            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool, buildMethodName(methodNameTimes, methodName), mergeParam);
+            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool, buildMethodName(methodNameTimes, methodName), mergeParam,importPackages);
 
             //方法注解
             AnnotationsAttribute mthAnnoAttrs = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
