@@ -29,4 +29,5 @@
 https://github.com/SpringStudent/dubbo-swagger-demo
 
 **Q&A**
+
 当dubbo api比较多时项目可能会启动比较慢,这是由于需要javassist创建的class太多了，请耐心等待~
