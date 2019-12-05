@@ -8,21 +8,50 @@
 <dependency>
     <groupId>io.github.springstudent</groupId>
     <artifactId>dubbo-swagger</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
 </dependency>    
 ```
 
 **注解开启dubbo-swagger**
 
 ```java
-@EnableDubboSwagger(classPackage = "com.gysoft.file.file.controller",requestPathPrefix = "pass",mergeParam = true)
+@EnableDubboSwagger(classPackage = "com.gysoft.file.file.controller")
 ```
 
-`classPackage`用于配置javassist生成的字节码存储地址，该包位置必须存在且能够被`<context:component-scan base-package="xxx"/>`扫描到
-
-`requestPathPrefix`请求服务地址的前缀配置，比如你有一个dubbo service的方法名称为`pageQuery`，`requestPathPrefix`配置为`pass`,那么在请求该方法时的path会变成`/pass/pageQuery`
-
-`mergeParam`开启合并参数,为什么要开启合并参数，dubbo api的参数比较复杂时，生成的controller会有多个`@RequestBody`，SpringMVC并不支持两个或者以上的`@RequestBody`传参，在mergeParam(默认开启)开启的场景下会将多个@RequestBody参数合并成一个。
+```java
+@Target(TYPE)
+@Retention(RUNTIME)
+@Import(DubboSwaggerRegistar.class)
+public @interface EnableDubboSwagger {
+    /**
+     * 用于配置javassist生成的字节码存储地址，
+     * 该包位置必须是已存在的包且能够被<context:component-scan base-package="xxx"/>扫描到
+     * 配置示例:com.gysoft.file.file.controller
+     * @return String
+     */
+    String classPackage();
+    /**
+     * 请求服务地址的前缀配置，比如你有一个dubbo service的方法名称为pageQuery,
+     * requestPathPrefix配置为pass,那么在请求该方法时的path会变成/pass/pageQuery
+     * 配置示例:pass
+     * @return String
+     */
+    String requestPathPrefix() default "";
+    /**
+     * 用于开启合并参数，为什么要开启合并参数？因为：dubbo api的参数比较复杂时，
+     * 生成的controller会有多个@RequestBody，SpringMVC不支持两个或者以上的@RequestBody传参，
+     * 在开启合并参数的场景下会将多个@RequestBody参数合并成一个。
+     * @return boolean
+     */
+   boolean mergeParam() default true;
+   /**
+     * 用于指定生成swagger api的dubbo api服务名称,使用dubbo api的类名称进行配置，
+     * 不配置则扫描全部dubbo api服务
+     * 配置示例:{"HelloApiService","TestApiService"}
+     * @return String[]
+     */
+   String[] includeApis() default {}; 
+```
 
 **dubbo-swagger-demo**
 

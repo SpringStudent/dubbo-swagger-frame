@@ -9,6 +9,8 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
 
+import java.util.Arrays;
+
 import static org.springframework.beans.factory.support.BeanDefinitionBuilder.rootBeanDefinition;
 
 /**
@@ -18,17 +20,18 @@ public class DubboSwaggerRegistar implements ImportBeanDefinitionRegistrar {
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(
                 importingClassMetadata.getAnnotationAttributes(EnableDubboSwagger.class.getName()));
         String classPackage = attributes.getString("classPackage");
         String requestPathPrefix = attributes.getString("requestPathPrefix");
         boolean mergeParam = attributes.getBoolean("mergeParam");
+        String[] includeApis = attributes.getStringArray("includeApis");
         BeanDefinitionBuilder builder = rootBeanDefinition(ApiServiceScanner.class);
         builder.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
         builder.addPropertyValue("classPackage", classPackage);
         builder.addPropertyValue("requestPathPrefix", requestPathPrefix);
         builder.addPropertyValue("mergeParam", mergeParam);
+        builder.addPropertyValue("includeApis", Arrays.asList(includeApis));
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
         BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinition, registry);
     }

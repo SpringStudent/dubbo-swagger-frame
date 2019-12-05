@@ -64,6 +64,10 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
      * 参数合并配置
      */
     private boolean mergeParam;
+    /**
+     * 指定那些apis产生controller
+     */
+    private List<String> includeApis;
 
     public void setClassPackage(String classPackage) {
         this.classPackage = classPackage;
@@ -76,6 +80,10 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
 
     public void setMergeParam(boolean mergeParam) {
         this.mergeParam = mergeParam;
+    }
+
+    public void setIncludeApis(List<String> includeApis) {
+        this.includeApis = includeApis;
     }
 
     @Override
@@ -94,6 +102,9 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
                     if (!StringUtils.isEmpty(beanClassName)) {
                         if (beanClassName.equals(Constants.DUBBO_SERVICE_BEAN) || beanClassName.equals(Constants.DUBBO_SERVICE_BEAN2)) {
                             interfaceName = beanDefinition.getPropertyValues().get(Constants.DUBBO_INTERFACE).toString();
+                            if(!apiIncluded(interfaceName)){
+                                continue;
+                            }
                             controllerClss = createController(interfaceName);
                             BeanDefinition candidate = null;
                             String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
@@ -131,6 +142,19 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
             }
         }
 
+    }
+
+    private boolean apiIncluded(String interfaceName) {
+        if (includeApis != null && includeApis.size() > 0) {
+            for (String includeApi : includeApis) {
+                if (interfaceName.endsWith(includeApi)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return true;
+        }
     }
 
     protected void registerBeanDefinition(BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry) {
@@ -223,7 +247,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
                 Integer methodTime = methodNameTimes.get(methodName) + 1;
                 methodNameTimes.put(methodName, methodTime);
             }
-            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool,buildMethodName(methodNameTimes, methodName) , mergeParam,importPackages);
+            CtMethodHelper ctMethodHelper = new CtMethodHelper(method, clss, constpool, buildMethodName(methodNameTimes, methodName), mergeParam, importPackages);
             //方法注解
             AnnotationsAttribute mthAnnoAttrs = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
             Annotation mthAno = new Annotation("org.springframework.web.bind.annotation.RequestMapping", constpool);
@@ -253,7 +277,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
     private String buildMethodName(Map<String, Integer> methodNameTimes, String methodName) {
         int methodTime = methodNameTimes.get(methodName);
         if (methodTime > 1) {
-            return methodName + (methodTime - 1)+Constants.REPEAT_METHOD_NAME_SUFFIX;
+            return methodName + (methodTime - 1) + Constants.REPEAT_METHOD_NAME_SUFFIX;
         } else {
             return methodName;
         }
