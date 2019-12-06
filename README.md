@@ -59,4 +59,18 @@ https://github.com/SpringStudent/dubbo-swagger-demo
 
 **Q&A**
 
-当dubbo api比较多时项目可能会启动比较慢,这是由于需要javassist创建的class太多了，请耐心等待~
+**1.启动慢**
+
+当dubbo api比较多时项目可能会启动比较慢,这是由于需要javassist创建的class太多导致的，如果有必要的话通过配置@EnableDubboSwagger的includeApis配置，只创建指定的dubbo api的controller来提升项目启动速度
+
+**2.项目启动失败后，重新启动报错如下**
+
+```java
+javassist.CannotCompileException: by java.lang.LinkageError: loader (instance of  sun/misc/Launcher$AppClassLoader): attempted  duplicate class definition for name: "io/github/springstudent/web/HelloApiService$DubboController"
+...
+at io.github.springstudent.core.ApiServiceScanner.writerCompiler(ApiServiceScanner.java:274)...	 
+Caused by: java.lang.LinkageError: loader (instance of  sun/misc/Launcher$AppClassLoader): attempted  duplicate class definition for name: "io/github/springstudent/web/HelloApiService$DubboController"
+    
+```
+
+出现这种情况是由于dubbo-swagger启动中通过javassist创建的class文件由于第一次项目启动失败未及时删除掉，第二次启动会加载到第一次启动dubbo-swagger创建的class，第二次启动也会创建相同的class文件并加载导致。可以删除掉@EnableDubboSwagger的classPackage配置的包下的由dubbo-swagger创建的class重启即可。
