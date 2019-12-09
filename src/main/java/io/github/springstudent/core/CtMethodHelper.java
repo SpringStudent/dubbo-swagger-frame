@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -229,9 +230,9 @@ public class CtMethodHelper {
     private String buildFieldName(Map<String, Integer> replaceClssTimeMap, MergeParamInfo mergeParamInfo) {
         Integer repeatTime = replaceClssTimeMap.get(mergeParamInfo.getOriginClss().getSimpleName());
         if (repeatTime!=null&&repeatTime > 1) {
-            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName() + (repeatTime - 1));
+            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]","") + (repeatTime - 1));
         } else {
-            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName());
+            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]",""));
         }
     }
 
