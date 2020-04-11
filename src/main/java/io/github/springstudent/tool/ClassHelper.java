@@ -11,6 +11,7 @@ import javassist.bytecode.SignatureAttribute;
 import javassist.bytecode.annotation.Annotation;
 import javassist.bytecode.annotation.EnumMemberValue;
 import javassist.bytecode.annotation.MemberValue;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -104,11 +105,14 @@ public class ClassHelper {
                         final Annotation[] annotations = annotationAttributes.getAnnotations();
                         for (Annotation annotation : annotations) {
                             result.add(annotation.getTypeName());
-                            for (Object memberName : annotation.getMemberNames()) {
-                                final MemberValue memberValue = annotation.getMemberValue((String) memberName);
-                                if (memberValue instanceof EnumMemberValue) {
-                                    EnumMemberValue value = (EnumMemberValue) memberValue;
-                                    result.add(value.getType());
+                            Set memberNames = annotation.getMemberNames();
+                            if(!CollectionUtils.isEmpty(memberNames)){
+                                for (Object memberName : memberNames) {
+                                    final MemberValue memberValue = annotation.getMemberValue((String) memberName);
+                                    if (memberValue instanceof EnumMemberValue) {
+                                        EnumMemberValue value = (EnumMemberValue) memberValue;
+                                        result.add(value.getType());
+                                    }
                                 }
                             }
                         }
