@@ -101,8 +101,13 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
                     beanClassName = beanDefinition.getBeanClassName();
                     if (!StringUtils.isEmpty(beanClassName)) {
                         if (beanClassName.equals(Constants.DUBBO_SERVICE_BEAN) || beanClassName.equals(Constants.DUBBO_SERVICE_BEAN2)) {
-                            interfaceName = beanDefinition.getPropertyValues().get(Constants.DUBBO_INTERFACE).toString();
-                            if(!apiIncluded(interfaceName)){
+                            if (beanDefinition.getPropertyValues().get(Constants.DUBBO_INTERFACE) != null) {
+                                interfaceName = beanDefinition.getPropertyValues().get(Constants.DUBBO_INTERFACE).toString();
+                            } else {
+                                Class tmpClss = (Class) beanDefinition.getPropertyValues().get(Constants.DUBBO_INTERFACE2);
+                                interfaceName = tmpClss.getCanonicalName();
+                            }
+                            if (!apiIncluded(interfaceName)) {
                                 continue;
                             }
                             controllerClss = createController(interfaceName);
@@ -143,6 +148,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         }
 
     }
+
 
     private boolean apiIncluded(String interfaceName) {
         if (includeApis != null && includeApis.size() > 0) {
