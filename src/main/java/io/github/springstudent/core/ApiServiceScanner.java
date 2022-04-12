@@ -205,7 +205,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         //导包
         String packageName = clss.getPackage().getName();
         pool.importPackage("org.springframework.web.bind.annotation");
-        pool.importPackage("io.swagger.annotations");
+//        pool.importPackage("io.swagger.annotations");
         pool.importPackage("javax.annotation");
         pool.importPackage("java.util");
         pool.importPackage("com.alibaba.fastjson.JSON");
@@ -229,10 +229,10 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         ArrayMemberValue amv = new ArrayMemberValue(constpool);
         amv.setValue(new StringMemberValue[]{new StringMemberValue(packageName + "." + clss.getSimpleName(), constpool)});
         rmAnnotation.addMemberValue("value", amv);
-        Annotation apiAnnotation = new Annotation("io.swagger.annotations.Api", constpool);
+//        Annotation apiAnnotation = new Annotation("io.swagger.annotations.Api", constpool);
         annotationsAttribute.addAnnotation(rcAnnotation);
         annotationsAttribute.addAnnotation(rmAnnotation);
-        annotationsAttribute.addAnnotation(apiAnnotation);
+//        annotationsAttribute.addAnnotation(apiAnnotation);
         cls.getClassFile().addAttribute(annotationsAttribute);
         //添加成员变量
         StringBuilder fieldAppender = new StringBuilder("private ").append(clss.getSimpleName()).append(" ").append(OsUtil.lowerFirst(clss.getSimpleName())).append(";");
