@@ -8,7 +8,7 @@
 <dependency>
     <groupId>io.github.springstudent</groupId>
     <artifactId>dubbo-swagger</artifactId>
-    <version>0.0.7</version>
+    <version>0.0.8</version>
 </dependency>    
 ```
 
