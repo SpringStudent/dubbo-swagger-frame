@@ -115,9 +115,9 @@ public class JavassistUtil {
                 memberValues[i] = new StringMemberValue((String) value, constpool);
             } else if (ClassUtils.isAssignable(value.getClass(), Boolean.class)) {
                 memberValues[i] = new BooleanMemberValue((Boolean) value, constpool);
-            } else if (ClassUtils.isAssignable(value.getClass(), Integer.class)) {
-                memberValues[i] = new IntegerMemberValue(constpool, (Integer) value);
-            } else if (ClassUtils.isAssignable(value.getClass(), Long.class)) {
+                } else if (ClassUtils.isAssignable(value.getClass(), Integer.class)) {
+                    memberValues[i] = new IntegerMemberValue(constpool, (Integer) value);
+                } else if (ClassUtils.isAssignable(value.getClass(), Long.class)) {
                 memberValues[i] = new LongMemberValue((Long) value, constpool);
             } else if (ClassUtils.isAssignable(value.getClass(), Double.class)) {
                 memberValues[i] = new DoubleMemberValue((Double) value, constpool);

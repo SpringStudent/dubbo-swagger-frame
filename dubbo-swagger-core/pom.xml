@@ -11,7 +11,7 @@
     <url>https://github.com/SpringStudent/dubbo-swagger</url>
     <description>dubbo intergrate with dubbo</description>
 
-    <name>dubbo-swagger</name>
+    <name>dubbo-swagger-core</name>
 
     <licenses>
         <license>

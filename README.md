@@ -53,10 +53,12 @@ public @interface EnableDubboSwagger {
    String[] includeApis() default {}; 
 ```
 
-**dubbo-swagger-demo**
+```java
 
-https://github.com/SpringStudent/dubbo-swagger-demo
+**示例:dubbo-swagger-demo**
 
+启动服务成功后，访问地址http://localhost:7778/swagger-ui/index.html#/ 以$dubbocontroller结尾的就是dubbo服务生成的swagger接口
+        
 **Q&A**
 
 **1.启动慢**
