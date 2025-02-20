@@ -116,4 +116,9 @@ public class HelloApiServiceImpl implements HelloApiService {
         }
         return result;
     }
+
+    @Override
+    public Map<String, Object> map(Generic<Generic<Generic<Zhou>>> me) {
+        return new HashMap<>();
+    }
 }

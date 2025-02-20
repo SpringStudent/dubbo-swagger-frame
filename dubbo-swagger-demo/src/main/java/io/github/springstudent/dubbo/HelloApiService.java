@@ -43,4 +43,6 @@ public interface HelloApiService {
 
     String[] split(List<String> message);
 
+    Map<String,Object> map(Generic<Generic<Generic<Zhou>>> me);
+
 }
