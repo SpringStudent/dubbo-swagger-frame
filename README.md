@@ -62,8 +62,6 @@ public @interface EnableDubboSwagger {
 
 启动服务成功后，访问地址http://localhost:7778/swagger-ui/index.html#/ 以$dubbocontroller结尾的就是dubbo服务生成的swagger接口
 
-**Q&A**
-
 **启动慢**
 
 当dubbo api比较多时项目可能会启动比较慢,这是由于需要javassist创建的class太多导致的，如果有必要的话通过配置@EnableDubboSwagger的includeApis配置，只创建指定的dubbo
