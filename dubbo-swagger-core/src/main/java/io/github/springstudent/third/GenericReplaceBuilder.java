@@ -4,10 +4,8 @@ import io.github.springstudent.third.bean.Tuple2;
 import io.github.springstudent.third.util.JavassistUtil;
 import io.github.springstudent.third.util.ReflectUtil;
 import io.github.springstudent.tool.ClassHelper;
-import io.github.springstudent.tool.Constants;
-import io.github.springstudent.tool.OsUtil;
-import javassist.*;
 import javassist.Modifier;
+import javassist.*;
 import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.apache.commons.lang3.ArrayUtils;
@@ -18,8 +16,6 @@ import sun.reflect.generics.repository.ClassRepository;
 import sun.reflect.generics.tree.*;
 
 import java.beans.PropertyDescriptor;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,11 +104,7 @@ public class GenericReplaceBuilder {
                 Class fieldClass = fieldTuples.get(fieldName).getFst();
                 buildFieldInfo(fieldName, fieldClass, newReturnCtClass);
             }
-            //将字节码写入文件
-            FileOutputStream fos = new FileOutputStream(new File(OsUtil.pathJoin(ClassHelper.getClassPath(), OsUtil.packagePath(classPackage), newReplaceClassName + ".class")));
-            fos.write(newReturnCtClass.toBytecode());
-            fos.close();
-            Class newReplaceClass = newReturnCtClass.toClass(ClassHelper.getCallerClassLoader(getClass()), GenericReplaceBuilder.class.getProtectionDomain());
+            Class newReplaceClass = pool.toClass(newReturnCtClass, ClassHelper.getCallerClassLoader(getClass()), GenericReplaceBuilder.class.getProtectionDomain());
             classMap.put(featureName, newReplaceClass);
             return newReplaceClass;
         } catch (Exception e) {
@@ -158,8 +150,7 @@ public class GenericReplaceBuilder {
         PropertyUtilsBean propertyUtils = beanUtils.getPropertyUtils();
         PropertyDescriptor[] propertyDescriptors = propertyUtils.getPropertyDescriptors(oldReturnClass);
 
-        Map<String, Tuple2<Class, Method>> tupleMap
-                = new HashMap<String, Tuple2<Class, Method>>();
+        Map<String, Tuple2<Class, Method>> tupleMap = new HashMap<String, Tuple2<Class, Method>>();
         for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
 
             String name = propertyDescriptor.getName();
@@ -204,8 +195,7 @@ public class GenericReplaceBuilder {
                 } else if (feature instanceof GenericInfo) {
                     newGenericClassMap.put(genericTypeNames[i], buildGenericClass((GenericInfo) feature, oldGenericClassMap));
                 } else if (feature instanceof GenericArrayInfo) {
-                    newGenericClassMap.put(genericTypeNames[i],
-                            buildGenericArrayClass((GenericArrayInfo) feature, oldGenericClassMap));
+                    newGenericClassMap.put(genericTypeNames[i], buildGenericArrayClass((GenericArrayInfo) feature, oldGenericClassMap));
                 } else {
                     newGenericClassMap.put(genericTypeNames[i], Object.class);
                 }
@@ -268,8 +258,7 @@ public class GenericReplaceBuilder {
         return genericArrayInfo;
     }
 
-    private static void buildfieldTuples(Map<String, Tuple2<Class, Method>> fieldTuples,
-                                         Map<String, Class> genericClassMap, Class oldReturnClass) {
+    private static void buildfieldTuples(Map<String, Tuple2<Class, Method>> fieldTuples, Map<String, Class> genericClassMap, Class oldReturnClass) {
 
         if (!CollectionUtils.isEmpty(fieldTuples)) {
             for (String fieldName : fieldTuples.keySet()) {

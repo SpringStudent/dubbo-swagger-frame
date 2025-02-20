@@ -23,23 +23,19 @@ public class JavassistTest {
         pool.importPackage("java.util.List");
         pool.importPackage("java.lang.Integer");
         // create the class
-        CtClass cc = pool.makeClass("foo");
+        CtClass cc = pool.makeClass("WORI");
         ClassFile ccFile = cc.getClassFile();
         ConstPool constpool = ccFile.getConstPool();
-
         // create the annotation
         AnnotationsAttribute attr = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
         Annotation annot = new Annotation("MyAnnotation", constpool);
         annot.addMemberValue("value", new IntegerMemberValue(ccFile.getConstPool(), 0));
         attr.addAnnotation(annot);
-
         // create the method
         CtMethod mthd = CtNewMethod.make("public void getInteger(String[] args) { return null; }", cc);
         cc.addMethod(mthd);
         mthd.getMethodInfo().addAttribute(attr);
-
         cc.writeFile("./");
-
         byte[] byteArr = cc.toBytecode();
         FileOutputStream fos = new FileOutputStream(new File(OsUtil.pathJoin("E:\\Intellij\\workspace-hello\\dubbo-swagger\\src\\main\\java\\io\\github\\springstudent\\", "TTTT.class")));
         fos.write(byteArr);

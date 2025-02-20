@@ -13,10 +13,7 @@ import javassist.bytecode.annotation.StringMemberValue;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -189,8 +186,8 @@ public class CtMethodHelper {
             if (mergeParamInfo.getReplaceClss() != null) {
                 if (mergeParamInfo.getReplaceClss().getPackage() != null) {
                     pool.importPackage(mergeParamInfo.getReplaceClss().getPackage().getName() + "." + mergeParamInfo.getReplaceClss().getSimpleName());
-                }else{
-                    pool.importPackage(mergeParamInfo.getReplaceClss().getTypeName().replace("[]",""));
+                } else {
+                    pool.importPackage(mergeParamInfo.getReplaceClss().getTypeName().replace("[]", ""));
                 }
                 if (mergeParamInfo.getOriginClss().getPackage() != null) {
                     pool.importPackage(mergeParamInfo.getOriginClss().getPackage().getName() + "." + mergeParamInfo.getOriginClss().getSimpleName());
@@ -221,18 +218,15 @@ public class CtMethodHelper {
             }
         }
         joinInvokerArgs = StringUtil.join(invokerArgs, ',');
-        FileOutputStream fos = new FileOutputStream(new File(OsUtil.pathJoin(ClassHelper.getClassPath(), OsUtil.packagePath(GenericReplaceBuilder.getClassPackage()), requestBodyParamsWrapperClssName + ".class")));
-        fos.write(requestBodyParamsWrapperCtClass.toBytecode());
-        fos.close();
-        return requestBodyParamsWrapperCtClass.toClass(ClassHelper.getCallerClassLoader(getClass()), CtMethodHelper.class.getProtectionDomain());
+        return pool.toClass(requestBodyParamsWrapperCtClass, ClassHelper.getCallerClassLoader(getClass()), CtMethodHelper.class.getProtectionDomain());
     }
 
     private String buildFieldName(Map<String, Integer> replaceClssTimeMap, MergeParamInfo mergeParamInfo) {
         Integer repeatTime = replaceClssTimeMap.get(mergeParamInfo.getOriginClss().getSimpleName());
-        if (repeatTime!=null&&repeatTime > 1) {
-            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]","") + (repeatTime - 1));
+        if (repeatTime != null && repeatTime > 1) {
+            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]", "") + (repeatTime - 1));
         } else {
-            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]",""));
+            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]", ""));
         }
     }
 

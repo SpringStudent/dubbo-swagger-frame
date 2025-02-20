@@ -6,7 +6,7 @@
 
     <groupId>io.github.springstudent</groupId>
     <artifactId>dubbo-swagger</artifactId>
-    <version>0.0.9</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <url>https://github.com/SpringStudent/dubbo-swagger</url>
     <description>dubbo intergrate with dubbo</description>

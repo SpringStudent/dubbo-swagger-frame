@@ -63,10 +63,6 @@ public class ClassHelper {
         return classPath;
     }
 
-    public static ClassLoader getLoader() {
-        return loader;
-    }
-
     public static boolean isPrimitive(Class<?> cls) {
         return cls.isPrimitive() || cls == String.class || cls == Boolean.class || cls == Character.class || Number.class.isAssignableFrom(cls) || Date.class.isAssignableFrom(cls);
     }
@@ -106,7 +102,7 @@ public class ClassHelper {
                         for (Annotation annotation : annotations) {
                             result.add(annotation.getTypeName());
                             Set memberNames = annotation.getMemberNames();
-                            if(!CollectionUtils.isEmpty(memberNames)){
+                            if (!CollectionUtils.isEmpty(memberNames)) {
                                 for (Object memberName : memberNames) {
                                     final MemberValue memberValue = annotation.getMemberValue((String) memberName);
                                     if (memberValue instanceof EnumMemberValue) {

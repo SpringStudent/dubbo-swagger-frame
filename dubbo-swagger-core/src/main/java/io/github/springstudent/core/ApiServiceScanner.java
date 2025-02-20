@@ -11,46 +11,29 @@ import javassist.bytecode.annotation.ArrayMemberValue;
 import javassist.bytecode.annotation.EnumMemberValue;
 import javassist.bytecode.annotation.StringMemberValue;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.context.annotation.*;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
-import org.springframework.core.type.classreading.MetadataReader;
-import org.springframework.core.type.classreading.MetadataReaderFactory;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author 周宁
  */
-public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProcessor, ApplicationListener<ContextRefreshedEvent> {
-
-    private ScopeMetadataResolver scopeMetadataResolver = new AnnotationScopeMetadataResolver();
-
-    private Environment environment;
+public class ApiServiceScanner implements BeanFactoryPostProcessor {
 
     private ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
 
-    private MetadataReaderFactory metadataReaderFactory =
-            new CachingMetadataReaderFactory(this.resourcePatternResolver);
     /**
      * 生成clss的目录地址,必须已经存在
      * 例如:io.github.controller
@@ -96,6 +79,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
                 String beanClassName = null;
                 String interfaceName = null;
                 Class<?> controllerClss = null;
+
                 for (String beanDefinitionName : beanDefinitionNames) {
                     beanDefinition = registry.getBeanDefinition(beanDefinitionName);
                     beanClassName = beanDefinition.getBeanClassName();
@@ -111,34 +95,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
                                 continue;
                             }
                             controllerClss = createController(interfaceName);
-                            BeanDefinition candidate = null;
-                            String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
-                                    resolveBasePackage(classPackage) + "/" + controllerClss.getSimpleName() + ".class";
-                            try {
-                                Resource[] resources = this.resourcePatternResolver.getResources(packageSearchPath);
-                                if (resources == null || resources.length == 0) {
-                                    continue;
-                                }
-                                MetadataReader metadataReader = this.metadataReaderFactory.getMetadataReader(resources[0]);
-                                candidate = new ScannedGenericBeanDefinition(metadataReader);
-                                ((ScannedGenericBeanDefinition) candidate).setResource(resources[0]);
-                                ((ScannedGenericBeanDefinition) candidate).setSource(resources[0]);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
-                            candidate.setScope(scopeMetadata.getScopeName());
-                            String beanName = controllerClss.getSimpleName();
-                            if (candidate instanceof AbstractBeanDefinition) {
-                                candidate.setAutowireCandidate(true);
-                            }
-                            if (candidate instanceof AnnotatedBeanDefinition) {
-                                AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
-                            }
-                            if (checkCandidate(beanName, candidate, registry)) {
-                                BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
-                                registerBeanDefinition(definitionHolder, registry);
-                            }
+                            registerDynamicControllerClass(controllerClss, registry);
                         }
                     }
                 }
@@ -149,6 +106,13 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
 
     }
 
+    private void registerDynamicControllerClass(Class<?> controllerClss, BeanDefinitionRegistry registry) {
+        RootBeanDefinition beanDefinition = new RootBeanDefinition(controllerClss);
+        beanDefinition.setScope(BeanDefinition.SCOPE_SINGLETON);
+        beanDefinition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+        String beanName = controllerClss.getSimpleName();
+        registry.registerBeanDefinition(beanName, beanDefinition);
+    }
 
     private boolean apiIncluded(String interfaceName) {
         if (includeApis != null && includeApis.size() > 0) {
@@ -163,31 +127,6 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
         }
     }
 
-    protected void registerBeanDefinition(BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry) {
-        BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, registry);
-    }
-
-    protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition, BeanDefinitionRegistry registry) throws IllegalStateException {
-        if (!registry.containsBeanDefinition(beanName)) {
-            return true;
-        } else {
-            BeanDefinition existingDef = registry.getBeanDefinition(beanName);
-            BeanDefinition originatingDef = existingDef.getOriginatingBeanDefinition();
-            if (originatingDef != null) {
-                existingDef = originatingDef;
-            }
-            if (this.isCompatible(beanDefinition, existingDef)) {
-                return false;
-            } else {
-                throw new RuntimeException("Annotation-specified bean name '" + beanName + "' for bean class [" + beanDefinition.getBeanClassName() + "] conflicts with existing, " + "non-compatible bean definition of same name and class [" + existingDef.getBeanClassName() + "]");
-            }
-        }
-    }
-
-    protected boolean isCompatible(BeanDefinition newDefinition, BeanDefinition existingDefinition) {
-        return !(existingDefinition instanceof ScannedGenericBeanDefinition) || newDefinition.getSource().equals(existingDefinition.getSource()) || newDefinition.equals(existingDefinition);
-    }
-
     private Class<?> createController(String interfaceName) throws IOException, CannotCompileException, NotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException {
         Class<?> interfaceClass = null;
         try {
@@ -200,7 +139,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
     }
 
     public Class<?> writerCompiler(Class<?> clss) throws CannotCompileException, IOException, NotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        ClassPool pool = new ClassPool();
+        ClassPool pool = ClassPool.getDefault();
         pool.appendClassPath(new LoaderClassPath(ClassHelper.getCallerClassLoader(getClass())));
         //导包
         String packageName = clss.getPackage().getName();
@@ -274,10 +213,7 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
             mthd.getMethodInfo().addAttribute(parameterAtrribute);
             mthd.getMethodInfo().addAttribute(mthAnnoAttrs);
         }
-        FileOutputStream fos = new FileOutputStream(new File(OsUtil.pathJoin(ClassHelper.getClassPath(), OsUtil.packagePath(classPackage), controllerClassName + ".class")));
-        fos.write(cls.toBytecode());
-        fos.close();
-        return cls.toClass(ClassHelper.getCallerClassLoader(getClass()), ApiServiceScanner.class.getProtectionDomain());
+        return pool.toClass(cls, ClassHelper.getCallerClassLoader(getClass()), ApiServiceScanner.class.getProtectionDomain());
     }
 
     private String buildMethodName(Map<String, Integer> methodNameTimes, String methodName) {
@@ -288,37 +224,4 @@ public class ApiServiceScanner implements EnvironmentAware, BeanFactoryPostProce
             return methodName;
         }
     }
-
-    protected String resolveBasePackage(String basePackage) {
-        return ClassUtils.convertClassNameToResourcePath(this.environment.resolveRequiredPlaceholders(basePackage));
-    }
-
-    @Override
-    public void setEnvironment(Environment environment) {
-        this.environment = environment;
-    }
-
-    @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
-        String psp = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
-                resolveBasePackage(classPackage) + "**/*" + Constants.DUBBO_CONTROLLER_SUFFIX + ".class";
-        String psp2 = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
-                resolveBasePackage(classPackage) + "**/" + Constants.REPLACE_GENERIC_CLASS_PREFIX + "*.class";
-        String psp3 = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
-                resolveBasePackage(classPackage) + "**/" + Constants.REQUEST_BODY_PARAMS_WRAPER_CLASS_PREFIX + "*.class";
-        List<String> packageSearchPaths = Arrays.asList(psp, psp2, psp3);
-        try {
-            for (String packageSearchPath : packageSearchPaths) {
-                Resource[] resources = this.resourcePatternResolver.getResources(packageSearchPath);
-                if (resources != null && resources.length > 0) {
-                    for (Resource resource : resources) {
-                        resource.getFile().delete();
-                    }
-                }
-            }
-        } catch (IOException e) {
-
-        }
-    }
-
 }
