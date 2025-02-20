@@ -17,8 +17,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -31,8 +29,6 @@ import java.util.Set;
  * @author 周宁
  */
 public class ApiServiceScanner implements BeanFactoryPostProcessor {
-
-    private ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
 
     /**
      * 生成clss的目录地址,必须已经存在
