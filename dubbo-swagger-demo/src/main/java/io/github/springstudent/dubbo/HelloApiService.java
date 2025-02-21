@@ -53,4 +53,6 @@ public interface HelloApiService {
     MyBoy myBoy(MyBoy myBoy,Generic<MyBoy> generic);
 
     JSONObject json(Tree<String> treeNode, MyBoy myBoy);
+
+    ZhouLao zhouLao(ZhouLao zhouLao,Zhou zhou);
 }

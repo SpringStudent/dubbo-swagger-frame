@@ -145,4 +145,9 @@ public class HelloApiServiceImpl implements HelloApiService {
     public JSONObject json(Tree<String> treeNode, MyBoy myBoy) {
         return new JSONObject();
     }
+
+    @Override
+    public ZhouLao zhouLao(ZhouLao zhouLao, Zhou zhou) {
+        return new ZhouLao();
+    }
 }
