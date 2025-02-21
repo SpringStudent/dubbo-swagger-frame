@@ -16,7 +16,7 @@
 **注解开启dubbo-swagger**
 
 ```java
-@EnableDubboSwagger(classPackage = "com.gysoft.file.file.controller")
+@EnableDubboSwagger(mergeParam = true,requestPathPrefix = "pass", classPackage = "io.github.springstudent.web", includeApis = {"HelloApiService"})
 ```
 
 ```java
