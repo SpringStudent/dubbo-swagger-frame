@@ -4,6 +4,7 @@ import io.github.springstudent.bean.Cheng;
 import io.github.springstudent.bean.Complex;
 import io.github.springstudent.bean.Generic;
 import io.github.springstudent.bean.Zhou;
+import io.github.springstudent.third.bean.Tuple2;
 
 import java.util.List;
 import java.util.Map;
@@ -31,18 +32,19 @@ public interface HelloApiService {
 
     void list(List<String> ids, Map<String, Zhou> map);
 
-    void list(List<Zhou> l1,List<Cheng> l2,List<Generic<Zhou>> generics);
+    void list(List<Zhou> l1, List<Cheng> l2, List<Generic<Zhou>> generics);
 
-    void multiGeneric(Generic<Cheng> chengGeneric,Generic<Zhou> zhouGeneric,List<Generic<Zhou>> generics);
+    void multiGeneric(Generic<Cheng> chengGeneric, Generic<Zhou> zhouGeneric, List<Generic<Zhou>> generics);
 
-    String maptest(Map<String,Generic<Cheng>> map)throws Exception;
+    String maptest(Map<String, Generic<Cheng>> map) throws Exception;
 
-    void arr(Zhou[] zhou,Generic<Cheng>[] chengGeneric);
+    void arr(Zhou[] zhou, Generic<Cheng>[] chengGeneric);
 
-    void complex(Complex complex,List<String[]> gan);
+    void complex(Complex complex, List<String[]> gan);
 
     String[] split(List<String> message);
 
-    Map<String,Object> map(Generic<Generic<Generic<Zhou>>> me);
+    Map<String, Object> map(Generic<Generic<Generic<Zhou>>> me);
 
+    Tuple2<String, Complex> tuple(Tuple2<Map<String, String>, Generic<String>> tuple2, List<String> strs);
 }

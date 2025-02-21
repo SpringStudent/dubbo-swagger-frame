@@ -4,10 +4,13 @@ import io.github.springstudent.bean.Cheng;
 import io.github.springstudent.bean.Complex;
 import io.github.springstudent.bean.Generic;
 import io.github.springstudent.bean.Zhou;
+import io.github.springstudent.third.bean.Tuple2;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,5 +123,14 @@ public class HelloApiServiceImpl implements HelloApiService {
     @Override
     public Map<String, Object> map(Generic<Generic<Generic<Zhou>>> me) {
         return new HashMap<>();
+    }
+
+    @Override
+    public Tuple2<String, Complex> tuple(Tuple2<Map<String, String>, Generic<String>> tuple2, List<String> strs) {
+        System.out.println(tuple2);
+        System.out.println(strs);
+        Complex complex = new Complex();
+        complex.setZhous(Arrays.asList(new Zhou()));
+        return new Tuple2(1,complex);
     }
 }
