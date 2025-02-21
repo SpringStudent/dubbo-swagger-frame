@@ -1,10 +1,12 @@
 package io.github.springstudent.dubbo;
 
+import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.lang.tree.TreeNode;
+import cn.hutool.json.JSONObject;
 import io.github.springstudent.bean.*;
-import io.github.springstudent.third.bean.Tuple2;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.dubbo.config.annotation.DubboService;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -111,8 +113,8 @@ public class HelloApiServiceImpl implements HelloApiService {
     @Override
     public String[] split(List<String> message) {
         String[] result = {};
-        for(String msg : message){
-            result = ArrayUtils.addAll(result,msg.split(","));
+        for (String msg : message) {
+            result = ArrayUtils.addAll(result, msg.split(","));
         }
         return result;
     }
@@ -132,5 +134,15 @@ public class HelloApiServiceImpl implements HelloApiService {
         res.setA(1);
         res.setB(complex);
         return res;
+    }
+
+    @Override
+    public MyBoy myBoy(MyBoy myBoy, Generic<MyBoy> generic) {
+        return new MyBoy();
+    }
+
+    @Override
+    public JSONObject json(Tree<String> treeNode, MyBoy myBoy) {
+        return new JSONObject();
     }
 }

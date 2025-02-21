@@ -1,5 +1,10 @@
 package io.github.springstudent.dubbo;
 
+import cn.hutool.core.bean.BeanDesc;
+import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.lang.tree.Tree;
+import cn.hutool.core.lang.tree.TreeNode;
+import cn.hutool.json.JSONObject;
 import io.github.springstudent.bean.*;
 import io.github.springstudent.third.bean.Tuple2;
 
@@ -44,4 +49,8 @@ public interface HelloApiService {
     Map<String, Object> map(Generic<Generic<Generic<Zhou>>> me);
 
     Pair<String, Complex> tuple(Pair<Map<String, String>, Generic<String>> pair, List<String> strs);
+
+    MyBoy myBoy(MyBoy myBoy,Generic<MyBoy> generic);
+
+    JSONObject json(Tree<String> treeNode, MyBoy myBoy);
 }
