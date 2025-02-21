@@ -12,7 +12,7 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
 @SpringBootApplication
 @EnableOpenApi
 @EnableDubbo
-@EnableDubboSwagger(mergeParam = true, classPackage = "io.github.springstudent.web", includeApis = {"HelloApiService"})
+@EnableDubboSwagger(mergeParam = true,requestPathPrefix = "pass", classPackage = "io.github.springstudent.web", includeApis = {"HelloApiService"})
 public class Application {
 
     public static void main(String[] args) {
