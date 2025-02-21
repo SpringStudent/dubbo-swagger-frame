@@ -1,9 +1,6 @@
 package io.github.springstudent.dubbo;
 
-import io.github.springstudent.bean.Cheng;
-import io.github.springstudent.bean.Complex;
-import io.github.springstudent.bean.Generic;
-import io.github.springstudent.bean.Zhou;
+import io.github.springstudent.bean.*;
 import io.github.springstudent.third.bean.Tuple2;
 
 import java.util.List;
@@ -46,5 +43,5 @@ public interface HelloApiService {
 
     Map<String, Object> map(Generic<Generic<Generic<Zhou>>> me);
 
-    Tuple2<String, Complex> tuple(Tuple2<Map<String, String>, Generic<String>> tuple2, List<String> strs);
+    Pair<String, Complex> tuple(Pair<Map<String, String>, Generic<String>> pair, List<String> strs);
 }
