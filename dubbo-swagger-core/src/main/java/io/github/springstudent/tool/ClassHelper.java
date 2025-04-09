@@ -1,24 +1,14 @@
 package io.github.springstudent.tool;
 
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.LoaderClassPath;
-import javassist.NotFoundException;
-import javassist.bytecode.AnnotationsAttribute;
-import javassist.bytecode.ClassFile;
-import javassist.bytecode.MethodInfo;
-import javassist.bytecode.SignatureAttribute;
-import javassist.bytecode.annotation.Annotation;
-import javassist.bytecode.annotation.EnumMemberValue;
-import javassist.bytecode.annotation.MemberValue;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -59,10 +49,6 @@ public class ClassHelper {
         }
     }
 
-    public static String getClassPath() {
-        return classPath;
-    }
-
     public static boolean isPrimitive(Class<?> cls) {
         return cls.isPrimitive() || cls == String.class || cls == Boolean.class || cls == Character.class || Number.class.isAssignableFrom(cls) || Date.class.isAssignableFrom(cls);
     }
@@ -84,72 +70,100 @@ public class ClassHelper {
         return caller.getClassLoader();
     }
 
-    public static Set<String> importPackages(List<MethodInfo> methodInfos) {
-        List<String> result = new ArrayList<>();
-        for (MethodInfo methodInfo : methodInfos) {
-            final List attributes = methodInfo.getAttributes();
-            if (attributes != null && attributes.size() > 0) {
-                String temp = null;
-                for (Object attribute : attributes) {
-                    if (attribute instanceof SignatureAttribute) {
-                        SignatureAttribute signatureAttribute = (SignatureAttribute) attribute;
-                        final byte info = signatureAttribute.get()[1];
-                        temp = signatureAttribute.getConstPool().getUtf8Info(Byte.toUnsignedInt(info));
-                        break;
-                    } else if (attribute instanceof AnnotationsAttribute) {
-                        AnnotationsAttribute annotationAttributes = (AnnotationsAttribute) attribute;
-                        final Annotation[] annotations = annotationAttributes.getAnnotations();
-                        for (Annotation annotation : annotations) {
-                            result.add(annotation.getTypeName());
-                            Set memberNames = annotation.getMemberNames();
-                            if (!CollectionUtils.isEmpty(memberNames)) {
-                                for (Object memberName : memberNames) {
-                                    final MemberValue memberValue = annotation.getMemberValue((String) memberName);
-                                    if (memberValue instanceof EnumMemberValue) {
-                                        EnumMemberValue value = (EnumMemberValue) memberValue;
-                                        result.add(value.getType());
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        temp = methodInfo.getDescriptor();
-                    }
-                }
-                result.add(temp);
-                result.add(methodInfo.getDescriptor());
-            } else {
-                result.add(methodInfo.getDescriptor());
+    public static Set<Class<?>> getReferencedClasses(Class<?> clazz) {
+        Set<Class<?>> result = new HashSet<>();
+        // 1. 类本身的泛型父类和接口
+        addType(clazz.getGenericSuperclass(), result);
+        for (Type iface : clazz.getGenericInterfaces()) {
+            addType(iface, result);
+        }
+        // 2. 类上的注解
+        for (java.lang.annotation.Annotation annotation : clazz.getAnnotations()) {
+            result.add(annotation.annotationType());
+        }
+        // 3. 字段类型和注解
+        for (Field field : clazz.getDeclaredFields()) {
+            addType(field.getGenericType(), result);
+            for (java.lang.annotation.Annotation annotation : field.getAnnotations()) {
+                result.add(annotation.annotationType());
             }
         }
-        Set<String> importPackages = new HashSet<>();
-        for (String ms : result) {
-            if (!StringUtils.isEmpty(ms)) {
-                ms = ms.replaceAll("\\(", "").replaceAll("\\)", "").replaceAll(">", ";").replaceAll("<", ";");
-                String[] typeArr = ms.split(";");
-                for (String type : typeArr) {
-                    if (!StringUtils.isEmpty(type) && !type.equals("V")) {
-                        importPackages.add(type.substring(type.indexOf("L") + 1).replaceAll("/", "."));
-                    }
+        // 4. 方法返回值、参数、异常、注解
+        for (Method method : clazz.getDeclaredMethods()) {
+            for (TypeVariable<Method> typeParam : method.getTypeParameters()) {
+                for (Type bound : typeParam.getBounds()) {
+                    addType(bound, result);
+                }
+            }
+            addType(method.getGenericReturnType(), result);
+            for (Type paramType : method.getGenericParameterTypes()) {
+                addType(paramType, result);
+            }
+            for (Type exceptionType : method.getGenericExceptionTypes()) {
+                addType(exceptionType, result);
+            }
+
+            for (java.lang.annotation.Annotation annotation : method.getAnnotations()) {
+                result.add(annotation.annotationType());
+            }
+
+            for (java.lang.annotation.Annotation[] paramAnnos : method.getParameterAnnotations()) {
+                for (java.lang.annotation.Annotation a : paramAnnos) {
+                    result.add(a.annotationType());
                 }
             }
         }
-        return importPackages;
+
+        // 5. 构造函数
+        for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
+            for (Type paramType : constructor.getGenericParameterTypes()) {
+                addType(paramType, result);
+            }
+            for (Type exceptionType : constructor.getGenericExceptionTypes()) {
+                addType(exceptionType, result);
+            }
+            for (Annotation annotation : constructor.getAnnotations()) {
+                result.add(annotation.annotationType());
+            }
+        }
+
+        // 6. 内部类
+        for (Class<?> inner : clazz.getDeclaredClasses()) {
+            result.add(inner);
+        }
+
+        return result;
     }
 
+    private static void addType(Type type, Set<Class<?>> result) {
+        if (type instanceof Class<?>) {
+            Class<?> cls = (Class<?>) type;
+            if (!cls.isPrimitive()) {
+                result.add(cls);
+            }
+        } else if (type instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) type;
+            addType(pt.getRawType(), result);
+            for (Type arg : pt.getActualTypeArguments()) {
+                addType(arg, result);
+            }
+        } else if (type instanceof GenericArrayType) {
+            addType(((GenericArrayType) type).getGenericComponentType(), result);
+        } else if (type instanceof WildcardType) {
+            WildcardType wt = (WildcardType) type;
+            for (Type upper : wt.getUpperBounds()) addType(upper, result);
+            for (Type lower : wt.getLowerBounds()) addType(lower, result);
+        }
+    }
 
-    public List<MethodInfo> methodInfos(Class<?> clss) throws NotFoundException {
-        ClassPool pool = ClassPool.getDefault();
-        pool.appendClassPath(new LoaderClassPath(ClassHelper.getCallerClassLoader(getClass())));
-        CtClass cc = pool.get(clss.getName());
-        ClassFile classFile = cc.getClassFile();
-        List<MethodInfo> methodInfos = new ArrayList();
-        for (Object method : classFile.getMethods()) {
-            if (method instanceof MethodInfo) {
-                MethodInfo methodInfo = (MethodInfo) method;
-                methodInfos.add(methodInfo);
+    public static Set<String> getDependencyPackages(Class<?> clazz) {
+        Set<String> packages = new HashSet<>();
+        Set<Class<?>> dependencies = getReferencedClasses(clazz);
+        for (Class<?> dependency : dependencies) {
+            if (dependency.getPackage() != null) {
+                packages.add(dependency.getPackage().getName());
             }
         }
-        return methodInfos;
+        return packages;
     }
 }

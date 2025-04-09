@@ -39,10 +39,6 @@ public class OsUtil {
         return String.valueOf(chars);
     }
 
-    public static String packagePath(String packageName) {
-        return packageName.replaceAll("\\.", "/");
-    }
-
     public static String importPackage(String packageName) {
         String[] packPath = packageName.split("\\.");
         if (packPath.length < 3) {

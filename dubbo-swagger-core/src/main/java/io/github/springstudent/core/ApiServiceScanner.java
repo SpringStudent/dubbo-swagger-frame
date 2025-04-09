@@ -145,9 +145,7 @@ public class ApiServiceScanner implements BeanFactoryPostProcessor {
         pool.importPackage("java.util");
         pool.importPackage("com.alibaba.fastjson.JSON");
         pool.importPackage(OsUtil.importPackage(packageName));
-        List<MethodInfo> methodInfos = new ClassHelper().methodInfos(clss);
-        //TODO FIXME 导入包代码优化
-        Set<String> importPackages = ClassHelper.importPackages(methodInfos);
+        Set<String> importPackages = ClassHelper.getDependencyPackages(clss);
         for (String ipc : importPackages) {
             pool.importPackage(ipc);
         }
