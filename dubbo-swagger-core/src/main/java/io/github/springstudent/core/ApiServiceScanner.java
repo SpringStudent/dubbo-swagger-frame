@@ -1,11 +1,13 @@
 package io.github.springstudent.core;
 
 import io.github.springstudent.third.GenericReplaceBuilder;
-import io.github.springstudent.tool.ClassHelper;
-import io.github.springstudent.tool.Constants;
-import io.github.springstudent.tool.OsUtil;
+import io.github.springstudent.tool.ClassUtil;
+import io.github.springstudent.tool.StringUtil;
 import javassist.*;
-import javassist.bytecode.*;
+import javassist.bytecode.AnnotationsAttribute;
+import javassist.bytecode.ClassFile;
+import javassist.bytecode.ConstPool;
+import javassist.bytecode.ParameterAnnotationsAttribute;
 import javassist.bytecode.annotation.Annotation;
 import javassist.bytecode.annotation.ArrayMemberValue;
 import javassist.bytecode.annotation.EnumMemberValue;
@@ -29,6 +31,15 @@ import java.util.Set;
  * @author 周宁
  */
 public class ApiServiceScanner implements BeanFactoryPostProcessor {
+
+    public static final String DUBBO_CONTROLLER_SUFFIX = "$DubboController";
+    public static final String DUBBO_SERVICE_BEAN = "com.alibaba.dubbo.config.spring.ServiceBean";
+    public static final String DUBBO_SERVICE_BEAN2 = "org.apache.dubbo.config.spring.ServiceBean";
+    public static final String DUBBO_INTERFACE = "interface";
+    public static final String DUBBO_INTERFACE2 = "interfaceClass";
+    public static final String REPLACE_GENERIC_CLASS_PREFIX = "ReplaceGeneric$";
+    public static final String REQUEST_BODY_PARAMS_WRAPER_CLASS_PREFIX = "Rbpw$";
+    public static final String REPEAT_METHOD_NAME_SUFFIX = "$RelaceMethod";
 
     /**
      * 生成clss的目录地址,必须已经存在
@@ -80,11 +91,11 @@ public class ApiServiceScanner implements BeanFactoryPostProcessor {
                     beanDefinition = registry.getBeanDefinition(beanDefinitionName);
                     beanClassName = beanDefinition.getBeanClassName();
                     if (!StringUtils.isEmpty(beanClassName)) {
-                        if (beanClassName.equals(Constants.DUBBO_SERVICE_BEAN) || beanClassName.equals(Constants.DUBBO_SERVICE_BEAN2)) {
-                            if (beanDefinition.getPropertyValues().get(Constants.DUBBO_INTERFACE) != null) {
-                                interfaceName = beanDefinition.getPropertyValues().get(Constants.DUBBO_INTERFACE).toString();
+                        if (beanClassName.equals(DUBBO_SERVICE_BEAN) || beanClassName.equals(DUBBO_SERVICE_BEAN2)) {
+                            if (beanDefinition.getPropertyValues().get(DUBBO_INTERFACE) != null) {
+                                interfaceName = beanDefinition.getPropertyValues().get(DUBBO_INTERFACE).toString();
                             } else {
-                                Class tmpClss = (Class) beanDefinition.getPropertyValues().get(Constants.DUBBO_INTERFACE2);
+                                Class tmpClss = (Class) beanDefinition.getPropertyValues().get(DUBBO_INTERFACE2);
                                 interfaceName = tmpClss.getCanonicalName();
                             }
                             if (!apiIncluded(interfaceName)) {
@@ -136,7 +147,7 @@ public class ApiServiceScanner implements BeanFactoryPostProcessor {
 
     public Class<?> writerCompiler(Class<?> clss) throws CannotCompileException, IOException, NotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         ClassPool pool = ClassPool.getDefault();
-        pool.appendClassPath(new LoaderClassPath(ClassHelper.getCallerClassLoader(getClass())));
+        pool.appendClassPath(new LoaderClassPath(ClassUtil.getCallerClassLoader(getClass())));
         //导包
         String packageName = clss.getPackage().getName();
         pool.importPackage("org.springframework.web.bind.annotation");
@@ -144,14 +155,14 @@ public class ApiServiceScanner implements BeanFactoryPostProcessor {
         pool.importPackage("javax.annotation");
         pool.importPackage("java.util");
         pool.importPackage("com.alibaba.fastjson.JSON");
-        pool.importPackage(OsUtil.importPackage(packageName));
-        Set<String> importPackages = ClassHelper.getDependencyPackages(clss);
+        pool.importPackage(StringUtil.importPackage(packageName));
+        Set<String> importPackages = ClassUtil.getDependencyPackages(clss);
         for (String ipc : importPackages) {
             pool.importPackage(ipc);
         }
         pool.importPackage(packageName + "." + clss.getSimpleName());
         //创建CtClass
-        String controllerClassName = clss.getSimpleName() + Constants.DUBBO_CONTROLLER_SUFFIX;
+        String controllerClassName = clss.getSimpleName() + DUBBO_CONTROLLER_SUFFIX;
         CtClass cls = pool.makeClass(classPackage + "." + controllerClassName);
         ClassFile classFile = cls.getClassFile();
         ConstPool constpool = classFile.getConstPool();
@@ -168,7 +179,7 @@ public class ApiServiceScanner implements BeanFactoryPostProcessor {
 //        annotationsAttribute.addAnnotation(apiAnnotation);
         cls.getClassFile().addAttribute(annotationsAttribute);
         //添加成员变量
-        StringBuilder fieldAppender = new StringBuilder("private ").append(clss.getSimpleName()).append(" ").append(OsUtil.lowerFirst(clss.getSimpleName())).append(";");
+        StringBuilder fieldAppender = new StringBuilder("private ").append(clss.getSimpleName()).append(" ").append(StringUtil.lowerFirst(clss.getSimpleName())).append(";");
         CtField ctField = CtField.make(fieldAppender.toString(), cls);
         AnnotationsAttribute fieldAnnoAttrs = new AnnotationsAttribute(constpool, AnnotationsAttribute.visibleTag);
         Annotation fieldAno = new Annotation("javax.annotation.Resource", constpool);
@@ -207,15 +218,17 @@ public class ApiServiceScanner implements BeanFactoryPostProcessor {
             mthd.getMethodInfo().addAttribute(parameterAtrribute);
             mthd.getMethodInfo().addAttribute(mthAnnoAttrs);
         }
-        return pool.toClass(cls, ClassHelper.getCallerClassLoader(getClass()), ApiServiceScanner.class.getProtectionDomain());
+        return pool.toClass(cls, ClassUtil.getCallerClassLoader(getClass()), ApiServiceScanner.class.getProtectionDomain());
     }
 
     private String buildMethodName(Map<String, Integer> methodNameTimes, String methodName) {
         int methodTime = methodNameTimes.get(methodName);
         if (methodTime > 1) {
-            return methodName + (methodTime - 1) + Constants.REPEAT_METHOD_NAME_SUFFIX;
+            return methodName + (methodTime - 1) + REPEAT_METHOD_NAME_SUFFIX;
         } else {
             return methodName;
         }
     }
+
+
 }

@@ -1,8 +1,13 @@
-package io.github.springstudent.third.util;
+package io.github.springstudent.tool;
+
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * @author 周宁
+ */
 public class StringUtil extends StringUtils {
+
     private static final char SEPARATOR = '_';
 
     public static String toCamelCase(String s) {
@@ -43,4 +48,26 @@ public class StringUtil extends StringUtils {
         s = toCamelCase(s);
         return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
+
+    public static String lowerFirst(String oldStr) {
+        char[] chars = oldStr.toCharArray();
+        chars[0] += 32;
+        return String.valueOf(chars);
+    }
+
+    public static String upperFirst(String oldStr) {
+        char[] chars = oldStr.toCharArray();
+        chars[0] -= 32;
+        return String.valueOf(chars);
+    }
+
+    public static String importPackage(String packageName) {
+        String[] packPath = packageName.split("\\.");
+        if (packPath.length < 3) {
+            return packageName;
+        } else {
+            return packPath[0] + "." + packPath[1];
+        }
+    }
+
 }

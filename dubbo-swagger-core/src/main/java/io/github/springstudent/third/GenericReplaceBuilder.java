@@ -1,9 +1,8 @@
 package io.github.springstudent.third;
 
-import io.github.springstudent.third.bean.Tuple2;
-import io.github.springstudent.third.util.JavassistUtil;
-import io.github.springstudent.third.util.ReflectUtil;
-import io.github.springstudent.tool.ClassHelper;
+import io.github.springstudent.tool.JavassistUtil;
+import io.github.springstudent.tool.ReflectUtil;
+import io.github.springstudent.tool.ClassUtil;
 import javassist.Modifier;
 import javassist.*;
 import org.apache.commons.beanutils.BeanUtilsBean;
@@ -87,16 +86,16 @@ public class GenericReplaceBuilder {
                 return ReflectUtil.getArrayClass(clazz);
             }
         }
-        return new GenericReplaceBuilder().buildClass(oldReturnClass, newGenericClassMap);
+        return buildClass(oldReturnClass, newGenericClassMap);
     }
 
-    public Class buildClass(Class genericClass, Map<String, Class> genericClassMap) {
+    public static Class buildClass(Class genericClass, Map<String, Class> genericClassMap) {
         try {
             String featureName = getFeatureName(genericClass, genericClassMap);
             if (classMap.containsKey(featureName)) {
                 return classMap.get(featureName);
             }
-            String newReplaceClassName = ClassNameBuilder.buildReplaceClassName(genericClass.getSimpleName());
+            String newReplaceClassName = ClassUtil.buildReplaceClassName(genericClass.getSimpleName());
             CtClass newReturnCtClass = pool.makeClass(classPackage + "." + newReplaceClassName);
             Map<String, Tuple2<Class, Method>> fieldTuples = buildNewPropertyInfos(genericClass);
             buildfieldTuples(fieldTuples, genericClassMap, genericClass);
@@ -104,7 +103,7 @@ public class GenericReplaceBuilder {
                 Class fieldClass = fieldTuples.get(fieldName).getFst();
                 buildFieldInfo(fieldName, fieldClass, newReturnCtClass);
             }
-            Class newReplaceClass = pool.toClass(newReturnCtClass, ClassHelper.getCallerClassLoader(getClass()), GenericReplaceBuilder.class.getProtectionDomain());
+            Class newReplaceClass = pool.toClass(newReturnCtClass, ClassUtil.getCallerClassLoader(GenericReplaceBuilder.class), GenericReplaceBuilder.class.getProtectionDomain());
             classMap.put(featureName, newReplaceClass);
             return newReplaceClass;
         } catch (Exception e) {

@@ -1,4 +1,4 @@
-package io.github.springstudent.third.util;
+package io.github.springstudent.tool;
 
 import java.util.Arrays;
 import java.util.List;

@@ -1,4 +1,4 @@
-package io.github.springstudent.third.util;
+package io.github.springstudent.tool;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;

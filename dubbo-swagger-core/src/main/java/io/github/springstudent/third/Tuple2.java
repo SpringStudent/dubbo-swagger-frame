@@ -1,4 +1,4 @@
-package io.github.springstudent.third.bean;
+package io.github.springstudent.third;
 
 import java.io.Serializable;
 

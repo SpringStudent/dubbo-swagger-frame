@@ -1,11 +1,9 @@
 package io.github.springstudent.core;
 
 import io.github.springstudent.third.GenericReplaceBuilder;
-import io.github.springstudent.third.util.JavassistUtil;
-import io.github.springstudent.third.util.StringUtil;
-import io.github.springstudent.tool.ClassHelper;
-import io.github.springstudent.tool.Constants;
-import io.github.springstudent.tool.OsUtil;
+import io.github.springstudent.tool.JavassistUtil;
+import io.github.springstudent.tool.ClassUtil;
+import io.github.springstudent.tool.StringUtil;
 import javassist.*;
 import javassist.bytecode.ConstPool;
 import javassist.bytecode.annotation.Annotation;
@@ -82,7 +80,7 @@ public class CtMethodHelper {
         }
         mappingPath.append(methodName);
         for (int i = 0; i < pts.length; i++) {
-            if (ClassHelper.isPrimitive(pts[i])) {
+            if (ClassUtil.isPrimitive(pts[i])) {
                 mappingPath.append("/{").append("arg").append(i).append("}");
             }
         }
@@ -91,8 +89,8 @@ public class CtMethodHelper {
 
     public String methodBody() {
         StringBuilder methodBody = new StringBuilder("public ");
-        methodBody.append(ClassHelper.getName(rt)).append(' ').append(methodName).append('(');
-        StringBuilder methodImpl = new StringBuilder(OsUtil.lowerFirst(clss.getSimpleName()));
+        methodBody.append(ClassUtil.getName(rt)).append(' ').append(methodName).append('(');
+        StringBuilder methodImpl = new StringBuilder(StringUtil.lowerFirst(clss.getSimpleName()));
         methodImpl.append(".").append(method.getName()).append("(");
         //如果进行了参数合并且参数合并了
         if (tps.length != pts.length) {
@@ -100,7 +98,7 @@ public class CtMethodHelper {
                 if (i > 0) {
                     methodBody.append(',');
                 }
-                methodBody.append(ClassHelper.getName(pts[i]));
+                methodBody.append(ClassUtil.getName(pts[i]));
                 methodBody.append(" arg").append(i);
                 if (AbstractRequestBodyParamsWrapper.class.isAssignableFrom(pts[i])) {
                     methodImpl.append(joinInvokerArgs);
@@ -113,7 +111,7 @@ public class CtMethodHelper {
                     methodImpl.append(",");
                 }
                 Class replaceClss = (GenericReplaceBuilder.buildReplaceClass(tps[i], null));
-                methodBody.append(ClassHelper.getName(replaceClss));
+                methodBody.append(ClassUtil.getName(replaceClss));
                 methodBody.append(" arg").append(i);
                 if (tps[i] != replaceClss) {
                     methodImpl.append("(").append((pts[i].getSimpleName())).append(")").append("JSON.parseObject(").append("JSON.toJSONString(arg").append(i).append(")").append(",").append(pts[i].getSimpleName() + ".class").append(")");
@@ -131,7 +129,7 @@ public class CtMethodHelper {
                 if (i > 0) {
                     methodBody.append(',');
                 }
-                methodBody.append(ClassHelper.getName(ets[i]));
+                methodBody.append(ClassUtil.getName(ets[i]));
             }
         }
         methodBody.append("{");
@@ -151,7 +149,7 @@ public class CtMethodHelper {
             int buildReplaceClassTimes = 0;
             List<MergeParamInfo> mergeParamInfos = new ArrayList<>();
             for (int i = 0; i < pts.length; i++) {
-                if (!ClassHelper.isPrimitive(pts[i])) {
+                if (!ClassUtil.isPrimitive(pts[i])) {
                     buildReplaceClassTimes = buildReplaceClassTimes + 1;
                     mergeParamInfos.add(new MergeParamInfo(i, pts[i], GenericReplaceBuilder.buildReplaceClass(tps[i], null)));
                 } else {
@@ -172,7 +170,7 @@ public class CtMethodHelper {
 
     private Class<? extends AbstractRequestBodyParamsWrapper> buildRequestBodyParamsWrapperClass(List<MergeParamInfo> mergeParamInfos, int buildReplaceClassTimes) throws NotFoundException, CannotCompileException, IOException, IllegalAccessException, InstantiationException {
         ClassPool pool = ClassPool.getDefault();
-        String requestBodyParamsWrapperClssName = Constants.REQUEST_BODY_PARAMS_WRAPER_CLASS_PREFIX + AbstractRequestBodyParamsWrapper.class.getSimpleName() + requestBodyParamsWrapperClssInx.getAndIncrement();
+        String requestBodyParamsWrapperClssName = ApiServiceScanner.REQUEST_BODY_PARAMS_WRAPER_CLASS_PREFIX + AbstractRequestBodyParamsWrapper.class.getSimpleName() + requestBodyParamsWrapperClssInx.getAndIncrement();
         CtClass requestBodyParamsWrapperCtClass = pool.makeClass(GenericReplaceBuilder.getClassPackage() + "." + requestBodyParamsWrapperClssName
                 , pool.get("io.github.springstudent.core.AbstractRequestBodyParamsWrapper"));
         CtField ctField = null;
@@ -210,23 +208,23 @@ public class CtMethodHelper {
                 JavassistUtil.addSetterForCtField(ctField);
                 invokerArgAppender = new StringBuilder("(").append(mergeParamInfo.getOriginClss().getSimpleName()).append(")")
                         .append("JSON.parseObject(").append("JSON.toJSONString(").append("arg").append(newArgLen)
-                        .append(".get").append(OsUtil.upperFirst(fieldName)).append("()")
+                        .append(".get").append(StringUtil.upperFirst(fieldName)).append("()")
                         .append(")").append(",").append(mergeParamInfo.getOriginClss().getSimpleName() + ".class").append(")");
                 invokerArgs[mergeParamInfo.getPtsInx()] = invokerArgAppender.toString();
             } else {
                 invokerArgs[mergeParamInfo.getPtsInx()] = mergeParamInfo.getInvokerArg();
             }
         }
-        joinInvokerArgs = StringUtil.join(invokerArgs, ',');
-        return pool.toClass(requestBodyParamsWrapperCtClass, ClassHelper.getCallerClassLoader(getClass()), CtMethodHelper.class.getProtectionDomain());
+        joinInvokerArgs = StringUtils.join(invokerArgs, ',');
+        return pool.toClass(requestBodyParamsWrapperCtClass, ClassUtil.getCallerClassLoader(getClass()), CtMethodHelper.class.getProtectionDomain());
     }
 
     private String buildFieldName(Map<String, Integer> replaceClssTimeMap, MergeParamInfo mergeParamInfo) {
         Integer repeatTime = replaceClssTimeMap.get(mergeParamInfo.getOriginClss().getSimpleName());
         if (repeatTime != null && repeatTime > 1) {
-            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]", "") + (repeatTime - 1));
+            return StringUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]", "") + (repeatTime - 1));
         } else {
-            return OsUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]", ""));
+            return StringUtil.lowerFirst(mergeParamInfo.getOriginClss().getSimpleName().replace("[]", ""));
         }
     }
 
@@ -234,7 +232,7 @@ public class CtMethodHelper {
         Annotation[][] annotations = new Annotation[pts.length][1];
         for (int i = 0; i < pts.length; i++) {
             Annotation paramAnnot = null;
-            if (ClassHelper.isPrimitive(pts[i])) {
+            if (ClassUtil.isPrimitive(pts[i])) {
                 paramAnnot = new Annotation("org.springframework.web.bind.annotation.PathVariable", constPool);
                 paramAnnot.addMemberValue("name", new StringMemberValue("arg" + i, constPool));
             } else {
