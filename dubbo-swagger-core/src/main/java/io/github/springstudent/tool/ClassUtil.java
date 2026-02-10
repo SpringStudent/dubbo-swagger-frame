@@ -77,6 +77,15 @@ public class ClassUtil {
 
     public static Set<Class<?>> getReferencedClasses(Class<?> clazz) {
         Set<Class<?>> result = new HashSet<>();
+        if (clazz == null) {
+            return result;
+        }
+        // 0. 类声明上的类型变量约束
+        for (TypeVariable<?> typeVariable : clazz.getTypeParameters()) {
+            for (Type bound : typeVariable.getBounds()) {
+                addType(bound, result);
+            }
+        }
         // 1. 类本身的泛型父类和接口
         addType(clazz.getGenericSuperclass(), result);
         for (Type iface : clazz.getGenericInterfaces()) {
@@ -143,7 +152,9 @@ public class ClassUtil {
     private static void addType(Type type, Set<Class<?>> result) {
         if (type instanceof Class<?>) {
             Class<?> cls = (Class<?>) type;
-            if (!cls.isPrimitive()) {
+            if (cls.isArray()) {
+                addType(cls.getComponentType(), result);
+            } else if (!cls.isPrimitive()) {
                 result.add(cls);
             }
         } else if (type instanceof ParameterizedType) {
@@ -158,6 +169,11 @@ public class ClassUtil {
             WildcardType wt = (WildcardType) type;
             for (Type upper : wt.getUpperBounds()) addType(upper, result);
             for (Type lower : wt.getLowerBounds()) addType(lower, result);
+        } else if (type instanceof TypeVariable<?>) {
+            TypeVariable<?> typeVariable = (TypeVariable<?>) type;
+            for (Type bound : typeVariable.getBounds()) {
+                addType(bound, result);
+            }
         }
     }
 

@@ -3,7 +3,6 @@ package io.github.springstudent.websocket;
 import cn.hutool.http.HttpRequest;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 
